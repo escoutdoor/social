@@ -1,10 +1,13 @@
 include .env
 
+run: 
+	@docker-compose up --build
+
 up:
-	@GOOSE_DRIVER=postgres GOOSE_DBSTRING=$(DSN) goose -dir="./migrations" up
+	@GOOSE_DRIVER=postgres GOOSE_DBSTRING=$(POSTGRES_URL_LOCALHOST) goose -dir="./migrations" up
 
 reset:
-	@GOOSE_DRIVER=postgres GOOSE_DBSTRING=$(DSN) goose -dir="./migrations" reset
+	@GOOSE_DRIVER=postgres GOOSE_DBSTRING=$(POSTGRES_URL_LOCALHOST) goose -dir="./migrations" reset
 
 db_status:
-	@GOOSE_DRIVER=postgres GOOSE_DBSTRING=$(DSN) goose -dir="./migrations" status
+	@GOOSE_DRIVER=postgres GOOSE_DBSTRING=$(POSTGRES_URL_LOCALHOST) goose -dir="./migrations" status

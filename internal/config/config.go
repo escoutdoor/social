@@ -6,7 +6,7 @@ import (
 )
 
 type Config struct {
-	PostgresURL string `envconfig:"POSTGRES_URL"`
+	PostgresURL string `envconfig:"POSTGRES_URL" required:"true"`
 }
 
 func New() (Config, error) {
