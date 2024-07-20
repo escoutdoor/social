@@ -3,7 +3,6 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"log/slog"
 
 	_ "github.com/lib/pq"
 )
@@ -18,6 +17,5 @@ func New(connStr string) (*sql.DB, error) {
 		return nil, fmt.Errorf("db ping error: %w", err)
 	}
 
-	slog.Info("connected to db")
 	return conn, nil
 }

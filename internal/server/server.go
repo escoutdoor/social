@@ -1,37 +1,39 @@
 package server
 
 import (
-	"log/slog"
+	"database/sql"
+	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/escoutdoor/social/internal/config"
-	"github.com/escoutdoor/social/internal/db"
 	"github.com/escoutdoor/social/internal/db/store"
 	"github.com/escoutdoor/social/internal/server/handlers"
 )
 
-type Server struct {
-	user handlers.UserHandler
+type Opts struct {
+	Config config.Config
+	DB     *sql.DB
 }
 
-func New(c config.Config) *http.Server {
-	db, err := db.New(c.PostgresURL)
-	if err != nil {
-		slog.Error("new server db conn", "error", err)
-		os.Exit(3)
-	}
-
-	userStore := store.NewUserStore(db)
+func New(opts Opts) *http.Server {
+	userStore := store.NewUserStore(opts.DB)
 	user := handlers.NewUserHandler(userStore)
 
+	authStore := store.NewAuthStore(opts.DB)
+	auth := handlers.NewAuthHandler(authStore)
 	api := &Server{
 		user: user,
-	}
-	server := &http.Server{
-		Addr:    ":8080",
-		Handler: api.NewRouter(),
+		auth: auth,
 	}
 
+	server := &http.Server{
+		Addr:    fmt.Sprintf(":%d", opts.Config.Port),
+		Handler: api.NewRouter(),
+	}
 	return server
+}
+
+type Server struct {
+	user handlers.UserHandler
+	auth handlers.AuthHandler
 }
