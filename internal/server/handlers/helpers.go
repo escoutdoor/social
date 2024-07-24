@@ -2,16 +2,28 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
-	"strconv"
 
+	"github.com/escoutdoor/social/internal/types"
 	"github.com/go-chi/chi"
+	"github.com/google/uuid"
 )
 
-func getIDParam(r *http.Request) (int, error) {
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
-	if err != nil || id < 1 {
-		return 0, errors.New("invalid id parameter")
+func getIDParam(r *http.Request) (uuid.UUID, error) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		return uuid.Nil, errors.New("invalid id parameter")
 	}
-	return int(id), nil
+	return id, nil
 }
+
+func getUserFromCtx(r *http.Request) (types.User, error) {
+	user, ok := r.Context().Value("user").(types.User)
+	if !ok {
+		return user, fmt.Errorf("no user")
+	}
+	return user, nil
+}
+
+type envelope map[string]interface{}

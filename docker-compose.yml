@@ -2,7 +2,7 @@ services:
   api:
     build: .
     ports:
-      - "80:8080"
+      - ${PORT}:${PORT}
     environment:
       LEVEL: debug
     depends_on:

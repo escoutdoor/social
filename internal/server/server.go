@@ -19,11 +19,15 @@ func New(opts Opts) *http.Server {
 	userStore := store.NewUserStore(opts.DB)
 	user := handlers.NewUserHandler(userStore)
 
-	authStore := store.NewAuthStore(opts.DB)
+	authStore := store.NewAuthStore(opts.DB, opts.Config.JWTKey)
 	auth := handlers.NewAuthHandler(authStore)
+
+	postStore := store.NewPostStore(opts.DB)
+	post := handlers.NewPostHandler(postStore)
 	api := &Server{
 		user: user,
 		auth: auth,
+		post: post,
 	}
 
 	server := &http.Server{
@@ -36,4 +40,5 @@ func New(opts Opts) *http.Server {
 type Server struct {
 	user handlers.UserHandler
 	auth handlers.AuthHandler
+	post handlers.PostHandler
 }
