@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -23,6 +24,7 @@ type AuthStorer interface {
 	SignUp(ctx context.Context, input types.CreateUserReq) (uuid.UUID, error)
 	SignIn(ctx context.Context, input types.LoginReq) (*types.User, error)
 	GenerateToken(ctx context.Context, userID uuid.UUID) (string, error)
+	ParseToken(jwtToken string) (uuid.UUID, error)
 }
 
 func NewAuthStore(db *sql.DB, jwtKey string) *AuthStore {
@@ -105,4 +107,23 @@ func (s *AuthStore) GenerateToken(ctx context.Context, userID uuid.UUID) (string
 	}
 
 	return tokenStr, nil
+}
+
+func (s *AuthStore) ParseToken(jwtToken string) (uuid.UUID, error) {
+	token, err := jwt.ParseWithClaims(jwtToken, &AuthTokenClaims{}, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+		}
+
+		return []byte(s.jwtKey), nil
+	})
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	claims, ok := token.Claims.(*AuthTokenClaims)
+	if !ok {
+		return uuid.Nil, ErrInvalidToken
+	}
+	return claims.UserID, nil
 }

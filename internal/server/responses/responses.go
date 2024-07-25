@@ -30,3 +30,7 @@ func NotFoundResponse(w http.ResponseWriter, err error) {
 func BadRequestResponse(w http.ResponseWriter, err error) {
 	ErrorResponse(w, http.StatusBadRequest, err.Error())
 }
+
+func UnauthorizedResponse(w http.ResponseWriter, err error) {
+	ErrorResponse(w, http.StatusUnauthorized, err.Error())
+}

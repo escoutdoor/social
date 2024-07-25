@@ -25,6 +25,7 @@ func NewAuthHandler(store store.AuthStorer) AuthHandler {
 
 func (h *AuthHandler) Router() *chi.Mux {
 	r := chi.NewRouter()
+
 	r.Post("/sign-up", h.handleSignUp)
 	r.Post("/sign-in", h.handleSignIn)
 

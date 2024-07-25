@@ -25,9 +25,9 @@ func NewUserHandler(store store.UserStorer) UserHandler {
 
 func (h *UserHandler) Router() *chi.Mux {
 	r := chi.NewRouter()
-	r.Get("/{id}", h.handleGetByID)
 	r.Put("/", h.handleUpdateUser)
 	r.Delete("/", h.handleDeleteUser)
+	r.Get("/{id}", h.handleGetByID)
 
 	return r
 }
@@ -55,7 +55,7 @@ func (h *UserHandler) handleGetByID(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 	userFromCtx, err := getUserFromCtx(r)
 	if err != nil {
-		responses.JSON(w, http.StatusUnauthorized, err)
+		responses.UnauthorizedResponse(w, err)
 		return
 	}
 
@@ -82,7 +82,7 @@ func (h *UserHandler) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) handleDeleteUser(w http.ResponseWriter, r *http.Request) {
 	user, err := getUserFromCtx(r)
 	if err != nil {
-		responses.JSON(w, http.StatusUnauthorized, err)
+		responses.UnauthorizedResponse(w, err)
 		return
 	}
 

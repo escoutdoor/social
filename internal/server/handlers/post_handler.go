@@ -35,7 +35,7 @@ func (h *PostHandler) Router() *chi.Mux {
 func (h *PostHandler) handleCreatePost(w http.ResponseWriter, r *http.Request) {
 	user, err := getUserFromCtx(r)
 	if err != nil {
-		responses.JSON(w, http.StatusUnauthorized, err)
+		responses.UnauthorizedResponse(w, err)
 		return
 	}
 
