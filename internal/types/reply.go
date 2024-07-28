@@ -6,18 +6,15 @@ import (
 	"github.com/google/uuid"
 )
 
-type Post struct {
+type Reply struct {
 	ID        uuid.UUID `json:"id"`
 	Text      string    `json:"text"`
 	UserID    uuid.UUID `json:"user_id"`
-	CreatedAt time.Time `json:"created_at"`
+	PostID    uuid.UUID `json:"post_id"`
 	UpdatedAt time.Time `json:"updated_at"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
-type CreatePostReq struct {
-	Text string `json:"text" validate:"required,min=3"`
-}
-
-type UpdatePostReq struct {
+type CreateReplyReq struct {
 	Text string `json:"text" validate:"required,min=3"`
 }

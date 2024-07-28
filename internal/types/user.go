@@ -25,10 +25,14 @@ type CreateUserReq struct {
 	Password  string `json:"password" validate:"required"`
 }
 
+type UpdateUserReq struct {
+	FirstName string `json:"first_name" validate:"required,min=2"`
+	LastName  string `json:"last_name" validate:"required,min=2"`
+	Email     string `json:"email" validate:"required,email"`
+	Password  string `json:"password" validate:"required,min=6"`
+}
+
 type LoginReq struct {
 	Email    string `json:"email" validate:"required"`
 	Password string `json:"password" validate:"required"`
-}
-
-type UpdateUserReq struct {
 }

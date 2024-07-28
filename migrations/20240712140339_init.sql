@@ -15,16 +15,29 @@ CREATE TABLE USERS (
 
 CREATE TABLE POSTS (
     id UUID PRIMARY KEY default gen_random_uuid(),
-    text TEXT,
-    user_id UUID,
+    text TEXT NOT NULL,
+    user_id UUID NOT NULL,
     updated_at TIMESTAMP NOT NULL default now(),
     created_at TIMESTAMP NOT NULL default now(),
     FOREIGN KEY("user_id") REFERENCES USERS("id") ON DELETE CASCADE
 );
+
+CREATE TABLE REPLIES (
+    id UUID PRIMARY KEY default gen_random_uuid(),
+    text TEXT NOT NULL,
+    user_id UUID NOT NULL,
+    post_id UUID NOT NULL,
+    updated_at TIMESTAMP NOT NULL default now(),
+    created_at TIMESTAMP NOT NULL default now(),
+    FOREIGN KEY("user_id") REFERENCES USERS("id") ON DELETE CASCADE,
+    FOREIGN KEY("post_id") REFERENCES POSTS("id") ON DELETE CASCADE
+);
+
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
+DROP TABLE REPLIES;
 DROP TABLE POSTS;
 DROP TABLE USERS;
 -- +goose StatementEnd

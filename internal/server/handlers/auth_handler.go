@@ -17,9 +17,9 @@ type AuthHandler struct {
 	store store.AuthStorer
 }
 
-func NewAuthHandler(store store.AuthStorer) AuthHandler {
+func NewAuthHandler(s store.AuthStorer) AuthHandler {
 	return AuthHandler{
-		store: store,
+		store: s,
 	}
 }
 

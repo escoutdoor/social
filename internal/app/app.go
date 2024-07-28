@@ -24,6 +24,7 @@ func Run() {
 		os.Exit(1)
 	}
 	defer db.Close()
+	slog.Info("successfully connected to postgres")
 
 	slog.Info("server is running", slog.Int("port", cfg.Port))
 	s := server.New(server.Opts{Config: cfg, DB: db})

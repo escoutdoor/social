@@ -25,15 +25,15 @@ func NewPostHandler(store store.PostStorer) PostHandler {
 
 func (h *PostHandler) Router() *chi.Mux {
 	r := chi.NewRouter()
-	r.Get("/{id}", h.handleGetByID)
 	r.Post("/", h.handleCreatePost)
+	r.Put("/{id}", h.handleUpdatePost)
+	r.Get("/{id}", h.handleGetByID)
 	r.Delete("/{id}", h.handleDeletePost)
-
 	return r
 }
 
 func (h *PostHandler) handleCreatePost(w http.ResponseWriter, r *http.Request) {
-	user, err := getUserFromCtx(r)
+	userIDCtx, err := getUserIDFromCtx(r)
 	if err != nil {
 		responses.UnauthorizedResponse(w, err)
 		return
@@ -50,13 +50,59 @@ func (h *PostHandler) handleCreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.store.Create(r.Context(), user.ID, input)
+	id, err := h.store.Create(r.Context(), userIDCtx, input)
 	if err != nil {
 		slog.Error("PostHandler.handleCreatePost - PostStore.Create", "error", err)
 		responses.InternalServerResponse(w, ErrIntervalServerError)
 		return
 	}
 	responses.JSON(w, http.StatusCreated, envelope{"id": id})
+}
+
+func (h *PostHandler) handleUpdatePost(w http.ResponseWriter, r *http.Request) {
+	userIDCtx, err := getUserIDFromCtx(r)
+	if err != nil {
+		responses.UnauthorizedResponse(w, err)
+		return
+	}
+	postID, err := getIDParam(r)
+	if err != nil {
+		responses.BadRequestResponse(w, err)
+		return
+	}
+
+	p, err := h.store.GetByID(r.Context(), postID)
+	if err != nil {
+		if errors.Is(err, store.ErrPostNotFound) {
+			responses.NotFoundResponse(w, err)
+			return
+		}
+		slog.Error("PostHandler.handleUpdatePost - PostStore.GetByID", "error", err)
+		responses.InternalServerResponse(w, ErrIntervalServerError)
+		return
+	}
+	if p.UserID != userIDCtx {
+		responses.ForbiddenResponse(w, ErrForbidden)
+		return
+	}
+
+	var input types.UpdatePostReq
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		responses.BadRequestResponse(w, ErrInvalidRequestBody)
+		return
+	}
+	if err := validation.Validate(input); err != nil {
+		responses.BadRequestResponse(w, err)
+		return
+	}
+
+	post, err := h.store.Update(r.Context(), postID, input)
+	if err != nil {
+		slog.Error("PostHandler.handleUpdatePost - PostStore.Update", "error", err)
+		responses.InternalServerResponse(w, ErrIntervalServerError)
+		return
+	}
+	responses.JSON(w, http.StatusOK, post)
 }
 
 func (h *PostHandler) handleGetByID(w http.ResponseWriter, r *http.Request) {
@@ -80,18 +126,34 @@ func (h *PostHandler) handleGetByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PostHandler) handleDeletePost(w http.ResponseWriter, r *http.Request) {
-	id, err := getIDParam(r)
+	userIDCtx, err := getUserIDFromCtx(r)
+	if err != nil {
+		responses.UnauthorizedResponse(w, err)
+		return
+	}
+	postID, err := getIDParam(r)
 	if err != nil {
 		responses.BadRequestResponse(w, err)
 		return
 	}
 
-	err = h.store.Delete(r.Context(), id)
+	post, err := h.store.GetByID(r.Context(), postID)
 	if err != nil {
 		if errors.Is(err, store.ErrPostNotFound) {
 			responses.NotFoundResponse(w, store.ErrPostNotFound)
 			return
 		}
+		slog.Error("PostHandler.handleDeletePost - PostStore.Delete", "error", err)
+		responses.InternalServerResponse(w, ErrIntervalServerError)
+		return
+	}
+	if post.UserID != userIDCtx {
+		responses.ForbiddenResponse(w, ErrForbidden)
+		return
+	}
+
+	err = h.store.Delete(r.Context(), postID)
+	if err != nil {
 		slog.Error("PostHandler.handleDeletePost - PostStore.Delete", "error", err)
 		responses.InternalServerResponse(w, ErrIntervalServerError)
 		return

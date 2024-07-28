@@ -9,6 +9,8 @@ import (
 	"github.com/escoutdoor/social/internal/server/responses"
 )
 
+const userIDCtx string = "user_id"
+
 type AuthMiddleware struct {
 	authStore store.AuthStorer
 }
@@ -36,7 +38,7 @@ func (m *AuthMiddleware) Auth(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "user_id", id)
+		ctx := context.WithValue(r.Context(), userIDCtx, id)
 		req := r.WithContext(ctx)
 		next.ServeHTTP(w, req)
 	})

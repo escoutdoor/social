@@ -34,3 +34,7 @@ func BadRequestResponse(w http.ResponseWriter, err error) {
 func UnauthorizedResponse(w http.ResponseWriter, err error) {
 	ErrorResponse(w, http.StatusUnauthorized, err.Error())
 }
+
+func ForbiddenResponse(w http.ResponseWriter, err error) {
+	ErrorResponse(w, http.StatusForbidden, err.Error())
+}

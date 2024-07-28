@@ -23,9 +23,9 @@ func (s *Server) NewRouter(authStore store.AuthStorer) *chi.Mux {
 		r.Mount("/auth", s.auth.Router())
 		r.Group(func(r chi.Router) {
 			r.Use(authMiddleware.Auth)
-
 			r.Mount("/users", s.user.Router())
 			r.Mount("/posts", s.post.Router())
+			r.Mount("/replies", s.reply.Router())
 		})
 	})
 	return router

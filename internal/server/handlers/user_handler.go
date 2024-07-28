@@ -9,6 +9,7 @@ import (
 	"github.com/escoutdoor/social/internal/db/store"
 	"github.com/escoutdoor/social/internal/server/responses"
 	"github.com/escoutdoor/social/internal/types"
+	"github.com/escoutdoor/social/pkg/hasher"
 	"github.com/escoutdoor/social/pkg/validation"
 	"github.com/go-chi/chi"
 )
@@ -53,9 +54,20 @@ func (h *UserHandler) handleGetByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
-	userFromCtx, err := getUserFromCtx(r)
+	userIDCtx, err := getUserIDFromCtx(r)
 	if err != nil {
 		responses.UnauthorizedResponse(w, err)
+		return
+	}
+
+	u, err := h.store.GetByID(r.Context(), userIDCtx)
+	if err != nil {
+		if errors.Is(err, store.ErrUserNotFound) {
+			responses.NotFoundResponse(w, store.ErrUserNotFound)
+			return
+		}
+		slog.Error("UserHandler.handleUpdateUser - UserStore.GetByID", "error", err)
+		responses.InternalServerResponse(w, ErrIntervalServerError)
 		return
 	}
 
@@ -70,7 +82,29 @@ func (h *UserHandler) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.store.Update(r.Context(), userFromCtx.ID, input)
+	if input.Email != u.Email {
+		ok, err := h.store.GetByEmail(r.Context(), input.Email)
+		if ok != nil {
+			responses.BadRequestResponse(w, store.ErrEmailAlreadyExists)
+			return
+		}
+		if err != nil {
+			slog.Error("UserHandler.handleUpdateUser - UserStore.GetByEmail", "error", err)
+			responses.InternalServerResponse(w, ErrIntervalServerError)
+			return
+		}
+	}
+
+	if !hasher.ComparePw(input.Password, u.Password) {
+		input.Password, err = hasher.HashPw(input.Password)
+		if err != nil {
+			slog.Error("UserHandler.handleUpdateUser - hasher.HashPw", "error", err)
+			responses.InternalServerResponse(w, ErrIntervalServerError)
+			return
+		}
+	}
+
+	user, err := h.store.Update(r.Context(), userIDCtx, input)
 	if err != nil {
 		slog.Error("UserHandler.handleUpdateUser - UserStore.Update", "error", err)
 		responses.InternalServerResponse(w, ErrIntervalServerError)
@@ -80,13 +114,13 @@ func (h *UserHandler) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) handleDeleteUser(w http.ResponseWriter, r *http.Request) {
-	user, err := getUserFromCtx(r)
+	userIDCtx, err := getUserIDFromCtx(r)
 	if err != nil {
 		responses.UnauthorizedResponse(w, err)
 		return
 	}
 
-	err = h.store.Delete(r.Context(), user.ID)
+	err = h.store.Delete(r.Context(), userIDCtx)
 	if err != nil {
 		if errors.Is(err, store.ErrUserNotFound) {
 			responses.NotFoundResponse(w, err)
