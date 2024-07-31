@@ -1,6 +1,6 @@
 include .env
 
-run: 
+run:
 	@docker-compose up --build
 
 up:

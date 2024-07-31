@@ -101,6 +101,7 @@ func scanPost(rows *sql.Rows) (*types.Post, error) {
 		&post.ID,
 		&post.Text,
 		&post.UserID,
+		&post.PhotoURL,
 		&post.CreatedAt,
 		&post.UpdatedAt,
 	)

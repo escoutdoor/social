@@ -7,11 +7,13 @@ import (
 
 	"github.com/escoutdoor/social/internal/config"
 	"github.com/escoutdoor/social/internal/db/store"
+	"github.com/escoutdoor/social/internal/s3"
 	"github.com/escoutdoor/social/internal/server/handlers"
 )
 
 type Opts struct {
 	Config config.Config
+	MinIO  *s3.MinIOClient
 	DB     *sql.DB
 }
 
@@ -27,11 +29,14 @@ func New(opts Opts) *http.Server {
 
 	replyStore := store.NewReplyStore(opts.DB)
 	reply := handlers.NewReplyHandler(replyStore, postStore)
+
+	file := handlers.NewFileHandler(opts.MinIO)
 	api := &Server{
 		user:  user,
 		auth:  auth,
 		post:  post,
 		reply: reply,
+		file:  file,
 	}
 
 	server := &http.Server{
@@ -46,4 +51,5 @@ type Server struct {
 	auth  handlers.AuthHandler
 	post  handlers.PostHandler
 	reply handlers.ReplyHandler
+	file  handlers.FileHandler
 }

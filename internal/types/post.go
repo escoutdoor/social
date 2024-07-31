@@ -10,6 +10,7 @@ type Post struct {
 	ID        uuid.UUID `json:"id"`
 	Text      string    `json:"text"`
 	UserID    uuid.UUID `json:"user_id"`
+	PhotoURL  *string   `json:"photo_url,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }

@@ -26,6 +26,7 @@ func (s *Server) NewRouter(authStore store.AuthStorer) *chi.Mux {
 			r.Mount("/users", s.user.Router())
 			r.Mount("/posts", s.post.Router())
 			r.Mount("/replies", s.reply.Router())
+			r.Mount("/files", s.file.Router())
 		})
 	})
 	return router
