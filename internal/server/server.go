@@ -12,9 +12,9 @@ import (
 )
 
 type Opts struct {
-	Config config.Config
-	MinIO  *s3.MinIOClient
-	DB     *sql.DB
+	Config    config.Config
+	S3Storage *s3.MinIOClient
+	DB        *sql.DB
 }
 
 func New(opts Opts) *http.Server {
@@ -30,7 +30,7 @@ func New(opts Opts) *http.Server {
 	replyStore := store.NewReplyStore(opts.DB)
 	reply := handlers.NewReplyHandler(replyStore, postStore)
 
-	file := handlers.NewFileHandler(opts.MinIO)
+	file := handlers.NewFileHandler(opts.S3Storage)
 	api := &Server{
 		user:  user,
 		auth:  auth,

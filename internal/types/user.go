@@ -7,26 +7,19 @@ import (
 )
 
 type User struct {
-	ID         uuid.UUID  `json:"id"`
-	FirstName  string     `json:"first_name"`
-	LastName   string     `json:"last_name"`
-	Email      string     `json:"email"`
-	Password   string     `json:"-"`
-	BirthDate  *time.Time `json:"birth_date,omitempty"`
-	Bio        *string    `json:"bio,omitempty"`
-	AvatartURL *string    `json:"avatar_url,omitempty"`
-	CreatedAt  time.Time  `json:"created_at"`
-	UpdatedAt  time.Time  `json:"updated_at"`
+	ID        uuid.UUID  `json:"id"`
+	FirstName string     `json:"first_name"`
+	LastName  string     `json:"last_name"`
+	Email     string     `json:"email"`
+	Password  string     `json:"-"`
+	BirthDate *time.Time `json:"birth_date,omitempty"`
+	Bio       *string    `json:"bio,omitempty"`
+	AvatarURL *string    `json:"avatar_url,omitempty"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
 }
 
 type CreateUserReq struct {
-	FirstName string `json:"first_name" validate:"required"`
-	LastName  string `json:"last_name" validate:"required"`
-	Email     string `json:"email" validate:"required"`
-	Password  string `json:"password" validate:"required"`
-}
-
-type UpdateUserReq struct {
 	FirstName string `json:"first_name" validate:"required,min=2"`
 	LastName  string `json:"last_name" validate:"required,min=2"`
 	Email     string `json:"email" validate:"required,email"`
@@ -34,6 +27,13 @@ type UpdateUserReq struct {
 }
 
 type LoginReq struct {
-	Email    string `json:"email" validate:"required"`
-	Password string `json:"password" validate:"required"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=6"`
+}
+
+type UpdateUserReq struct {
+	FirstName string `json:"first_name" validate:"omitempty,min=2"`
+	LastName  string `json:"last_name" validate:"omitempty,min=2"`
+	Email     string `json:"email" validate:"omitempty,email"`
+	Password  string `json:"password" validate:"omitempty,min=6"`
 }

@@ -16,9 +16,11 @@ type Post struct {
 }
 
 type CreatePostReq struct {
-	Text string `json:"text" validate:"required,min=3"`
+	Text     string `json:"text" validate:"required,min=3"`
+	PhotoURL string `json:"photo_url" validate:"omitempty,url"`
 }
 
 type UpdatePostReq struct {
-	Text string `json:"text" validate:"required,min=3"`
+	Text     string `json:"text" validate:"omitempty,min=3"`
+	PhotoURL string `json:"photo_url" validate:"omitempty,url"`
 }

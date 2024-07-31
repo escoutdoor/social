@@ -88,7 +88,7 @@ func (h *UserHandler) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 			responses.BadRequestResponse(w, store.ErrEmailAlreadyExists)
 			return
 		}
-		if err != nil {
+		if err != nil && !errors.Is(err, store.ErrUserNotFound) {
 			slog.Error("UserHandler.handleUpdateUser - UserStore.GetByEmail", "error", err)
 			responses.InternalServerResponse(w, ErrIntervalServerError)
 			return

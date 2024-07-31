@@ -35,7 +35,7 @@ func Run() {
 	slog.Info("successfully connected to s3")
 
 	slog.Info("server is running", slog.Int("port", cfg.Port))
-	s := server.New(server.Opts{Config: cfg, DB: db, MinIO: s3})
+	s := server.New(server.Opts{Config: cfg, DB: db, S3Storage: s3})
 	if err := s.ListenAndServe(); err != nil {
 		slog.Error("server encountered an error", "error", err)
 		os.Exit(1)

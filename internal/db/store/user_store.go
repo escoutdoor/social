@@ -115,7 +115,7 @@ func scanUser(rows *sql.Rows) (*types.User, error) {
 		&user.Password,
 		&user.BirthDate,
 		&user.Bio,
-		&user.AvatartURL,
+		&user.AvatarURL,
 		&user.UpdatedAt,
 		&user.CreatedAt,
 	); err != nil {
