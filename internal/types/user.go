@@ -12,7 +12,7 @@ type User struct {
 	LastName  string     `json:"last_name"`
 	Email     string     `json:"email"`
 	Password  string     `json:"-"`
-	BirthDate *time.Time `json:"birth_date,omitempty"`
+	DOB       *time.Time `json:"date_of_birth,omitempty"`
 	Bio       *string    `json:"bio,omitempty"`
 	AvatarURL *string    `json:"avatar_url,omitempty"`
 	CreatedAt time.Time  `json:"created_at"`
@@ -32,8 +32,11 @@ type LoginReq struct {
 }
 
 type UpdateUserReq struct {
-	FirstName string `json:"first_name" validate:"omitempty,min=2"`
-	LastName  string `json:"last_name" validate:"omitempty,min=2"`
-	Email     string `json:"email" validate:"omitempty,email"`
-	Password  string `json:"password" validate:"omitempty,min=6"`
+	FirstName *string `json:"first_name" validate:"omitempty,min=2"`
+	LastName  *string `json:"last_name" validate:"omitempty,min=2"`
+	Email     *string `json:"email" validate:"omitempty,email"`
+	Password  *string `json:"password" validate:"omitempty,min=6"`
+	DOB       *string `json:"date_of_birth" validate:"omitempty"`
+	Bio       *string `json:"bio" validate:"omitempty"`
+	AvatarURL *string `json:"avatar_url" validate:"omitempty,url"`
 }

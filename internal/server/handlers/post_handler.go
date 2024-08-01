@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/escoutdoor/social/internal/db/store"
+	"github.com/escoutdoor/social/internal/postgres/store"
 	"github.com/escoutdoor/social/internal/server/responses"
 	"github.com/escoutdoor/social/internal/types"
 	"github.com/escoutdoor/social/pkg/validation"
@@ -96,7 +96,13 @@ func (h *PostHandler) handleUpdatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	post, err := h.store.Update(r.Context(), postID, input)
+	if input.Text != nil {
+		p.Text = *input.Text
+	}
+	if input.PhotoURL != nil {
+		p.PhotoURL = input.PhotoURL
+	}
+	post, err := h.store.Update(r.Context(), postID, *p)
 	if err != nil {
 		slog.Error("PostHandler.handleUpdatePost - PostStore.Update", "error", err)
 		responses.InternalServerResponse(w, ErrIntervalServerError)

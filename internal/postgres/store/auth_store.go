@@ -20,13 +20,6 @@ type AuthStore struct {
 	jwtKey    string
 }
 
-type AuthStorer interface {
-	SignUp(ctx context.Context, input types.CreateUserReq) (uuid.UUID, error)
-	SignIn(ctx context.Context, input types.LoginReq) (*types.User, error)
-	GenerateToken(ctx context.Context, userID uuid.UUID) (string, error)
-	ParseToken(jwtToken string) (uuid.UUID, error)
-}
-
 func NewAuthStore(db *sql.DB, jwtKey string) *AuthStore {
 	return &AuthStore{
 		db:        db,

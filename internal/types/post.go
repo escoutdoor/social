@@ -21,6 +21,6 @@ type CreatePostReq struct {
 }
 
 type UpdatePostReq struct {
-	Text     string `json:"text" validate:"omitempty,min=3"`
-	PhotoURL string `json:"photo_url" validate:"omitempty,url"`
+	Text     *string `json:"text" validate:"omitempty,min=3"`
+	PhotoURL *string `json:"photo_url" validate:"omitempty,url"`
 }

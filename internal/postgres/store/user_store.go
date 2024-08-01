@@ -8,13 +8,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type UserStorer interface {
-	GetByID(ctx context.Context, id uuid.UUID) (*types.User, error)
-	GetByEmail(ctx context.Context, email string) (*types.User, error)
-	Update(ctx context.Context, id uuid.UUID, input types.UpdateUserReq) (*types.User, error)
-	Delete(ctx context.Context, id uuid.UUID) error
-}
-
 type UserStore struct {
 	db *sql.DB
 }
@@ -63,30 +56,35 @@ func (s *UserStore) GetByEmail(ctx context.Context, email string) (*types.User, 
 	return nil, ErrUserNotFound
 }
 
-func (s *UserStore) Update(ctx context.Context, id uuid.UUID, input types.UpdateUserReq) (*types.User, error) {
+func (s *UserStore) Update(ctx context.Context, id uuid.UUID, input types.User) (*types.User, error) {
 	stmt, err := s.db.PrepareContext(ctx, `
 		UPDATE USERS SET
-			EMAIL = $1,
-			PASSWORD = $2,
-			FIRST_NAME = $3,
-			LAST_NAME = $4
-		WHERE ID = $5
+			FIRST_NAME = $1,
+			LAST_NAME = $2,
+			EMAIL = $3,
+			PASSWORD = $4,
+			DATE_OF_BIRTH = $5,
+			BIO = $6,
+			AVATAR_URL = $7
+		WHERE ID = $8
 	`)
 	if err != nil {
 		return nil, err
 	}
 
 	_, err = stmt.ExecContext(ctx,
-		input.Email,
-		input.Password,
 		input.FirstName,
 		input.LastName,
+		input.Email,
+		input.Password,
+		input.DOB,
+		input.Bio,
+		input.AvatarURL,
 		id,
 	)
 	if err != nil {
 		return nil, err
 	}
-
 	return s.GetByID(ctx, id)
 }
 
@@ -113,7 +111,7 @@ func scanUser(rows *sql.Rows) (*types.User, error) {
 		&user.LastName,
 		&user.Email,
 		&user.Password,
-		&user.BirthDate,
+		&user.DOB,
 		&user.Bio,
 		&user.AvatarURL,
 		&user.UpdatedAt,

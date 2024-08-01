@@ -1,10 +1,16 @@
 package validation
 
 import (
+	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/go-playground/validator/v10"
+)
+
+var (
+	ErrInvalidDateFormat = errors.New("invalid date format")
 )
 
 func Validate(v interface{}) error {
@@ -19,6 +25,14 @@ func Validate(v interface{}) error {
 	}
 
 	return nil
+}
+
+func ValidateDate(dobStr string) (time.Time, error) {
+	dob, err := time.Parse("2006-01-02", dobStr)
+	if err != nil {
+		return time.Time{}, ErrInvalidDateFormat
+	}
+	return dob, nil
 }
 
 func getValidationErr(err validator.FieldError) error {

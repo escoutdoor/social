@@ -7,7 +7,7 @@ CREATE TABLE USERS (
     last_name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     password TEXT NOT NULL,
-    birthdate DATE,
+    date_of_birth DATE,
     bio TEXT,
     avatar_url VARCHAR(255),
     updated_at TIMESTAMP NOT NULL default now(),

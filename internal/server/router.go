@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/escoutdoor/social/internal/db/store"
+	"github.com/escoutdoor/social/internal/postgres/store"
 	"github.com/escoutdoor/social/internal/server/middlewares"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"

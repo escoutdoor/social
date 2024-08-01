@@ -12,12 +12,6 @@ type ReplyStore struct {
 	db *sql.DB
 }
 
-type ReplyStorer interface {
-	Create(ctx context.Context, userID uuid.UUID, postID uuid.UUID, input types.CreateReplyReq) (uuid.UUID, error)
-	GetByID(ctx context.Context, id uuid.UUID) (*types.Reply, error)
-	Delete(ctx context.Context, id uuid.UUID) error
-}
-
 func NewReplyStore(db *sql.DB) *ReplyStore {
 	return &ReplyStore{
 		db: db,

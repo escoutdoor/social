@@ -12,13 +12,6 @@ type PostStore struct {
 	db *sql.DB
 }
 
-type PostStorer interface {
-	Create(ctx context.Context, userID uuid.UUID, input types.CreatePostReq) (uuid.UUID, error)
-	Update(ctx context.Context, postID uuid.UUID, input types.UpdatePostReq) (*types.Post, error)
-	GetByID(ctx context.Context, id uuid.UUID) (*types.Post, error)
-	Delete(ctx context.Context, id uuid.UUID) error
-}
-
 func NewPostStore(db *sql.DB) *PostStore {
 	return &PostStore{
 		db: db,
@@ -41,7 +34,7 @@ func (s *PostStore) Create(ctx context.Context, userID uuid.UUID, input types.Cr
 	return postID, nil
 }
 
-func (s *PostStore) Update(ctx context.Context, postID uuid.UUID, input types.UpdatePostReq) (*types.Post, error) {
+func (s *PostStore) Update(ctx context.Context, postID uuid.UUID, input types.Post) (*types.Post, error) {
 	stmt, err := s.db.PrepareContext(ctx, `
 		UPDATE POSTS SET
 			TEXT = $1,

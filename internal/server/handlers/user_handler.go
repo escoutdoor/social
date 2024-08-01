@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/escoutdoor/social/internal/db/store"
+	"github.com/escoutdoor/social/internal/postgres/store"
 	"github.com/escoutdoor/social/internal/server/responses"
 	"github.com/escoutdoor/social/internal/types"
 	"github.com/escoutdoor/social/pkg/hasher"
@@ -76,35 +76,54 @@ func (h *UserHandler) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		responses.BadRequestResponse(w, ErrInvalidRequestBody)
 		return
 	}
-
 	if err := validation.Validate(input); err != nil {
 		responses.BadRequestResponse(w, err)
 		return
 	}
 
-	if input.Email != u.Email {
-		ok, err := h.store.GetByEmail(r.Context(), input.Email)
-		if ok != nil {
+	if input.FirstName != nil {
+		u.FirstName = *input.FirstName
+	}
+	if input.LastName != nil {
+		u.LastName = *input.LastName
+	}
+	if input.Email != nil {
+		ok, err := h.store.GetByEmail(r.Context(), *input.Email)
+		switch {
+		case ok != nil:
 			responses.BadRequestResponse(w, store.ErrEmailAlreadyExists)
 			return
-		}
-		if err != nil && !errors.Is(err, store.ErrUserNotFound) {
+		case err != nil && !errors.Is(err, store.ErrUserNotFound):
 			slog.Error("UserHandler.handleUpdateUser - UserStore.GetByEmail", "error", err)
 			responses.InternalServerResponse(w, ErrIntervalServerError)
 			return
 		}
+		u.Email = *input.Email
 	}
-
-	if !hasher.ComparePw(input.Password, u.Password) {
-		input.Password, err = hasher.HashPw(input.Password)
+	if input.Password != nil && !hasher.ComparePw(*input.Password, u.Password) {
+		u.Password, err = hasher.HashPw(*input.Password)
 		if err != nil {
 			slog.Error("UserHandler.handleUpdateUser - hasher.HashPw", "error", err)
 			responses.InternalServerResponse(w, ErrIntervalServerError)
 			return
 		}
 	}
+	if input.DOB != nil {
+		dob, err := validation.ValidateDate(*input.DOB)
+		if err != nil {
+			responses.BadRequestResponse(w, err)
+			return
+		}
+		u.DOB = &dob
+	}
+	if input.Bio != nil {
+		u.Bio = input.Bio
+	}
+	if input.AvatarURL != nil {
+		u.AvatarURL = input.AvatarURL
+	}
 
-	user, err := h.store.Update(r.Context(), userIDCtx, input)
+	user, err := h.store.Update(r.Context(), userIDCtx, *u)
 	if err != nil {
 		slog.Error("UserHandler.handleUpdateUser - UserStore.Update", "error", err)
 		responses.InternalServerResponse(w, ErrIntervalServerError)

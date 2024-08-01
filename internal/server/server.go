@@ -1,36 +1,27 @@
 package server
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 
 	"github.com/escoutdoor/social/internal/config"
-	"github.com/escoutdoor/social/internal/db/store"
+	"github.com/escoutdoor/social/internal/postgres/store"
 	"github.com/escoutdoor/social/internal/s3"
 	"github.com/escoutdoor/social/internal/server/handlers"
 )
 
 type Opts struct {
-	Config    config.Config
-	S3Storage *s3.MinIOClient
-	DB        *sql.DB
+	Config  config.Config
+	S3Store *s3.MinIOClient
+	Store   *store.Store
 }
 
 func New(opts Opts) *http.Server {
-	userStore := store.NewUserStore(opts.DB)
-	user := handlers.NewUserHandler(userStore)
-
-	authStore := store.NewAuthStore(opts.DB, opts.Config.JWTKey)
-	auth := handlers.NewAuthHandler(authStore)
-
-	postStore := store.NewPostStore(opts.DB)
-	post := handlers.NewPostHandler(postStore)
-
-	replyStore := store.NewReplyStore(opts.DB)
-	reply := handlers.NewReplyHandler(replyStore, postStore)
-
-	file := handlers.NewFileHandler(opts.S3Storage)
+	user := handlers.NewUserHandler(opts.Store.User)
+	auth := handlers.NewAuthHandler(opts.Store.Auth)
+	post := handlers.NewPostHandler(opts.Store.Post)
+	reply := handlers.NewReplyHandler(opts.Store.Reply, opts.Store.Post)
+	file := handlers.NewFileHandler(opts.S3Store)
 	api := &Server{
 		user:  user,
 		auth:  auth,
@@ -41,7 +32,7 @@ func New(opts Opts) *http.Server {
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", opts.Config.Port),
-		Handler: api.NewRouter(authStore),
+		Handler: api.NewRouter(opts.Store.Auth),
 	}
 	return server
 }
