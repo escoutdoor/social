@@ -8,7 +8,7 @@ import (
 
 type Post struct {
 	ID        uuid.UUID `json:"id"`
-	Text      string    `json:"text"`
+	Content   string    `json:"content"`
 	UserID    uuid.UUID `json:"user_id"`
 	PhotoURL  *string   `json:"photo_url,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
@@ -16,11 +16,11 @@ type Post struct {
 }
 
 type CreatePostReq struct {
-	Text     string `json:"text" validate:"required,min=3"`
+	Content  string `json:"content" validate:"required,min=3"`
 	PhotoURL string `json:"photo_url" validate:"omitempty,url"`
 }
 
 type UpdatePostReq struct {
-	Text     *string `json:"text" validate:"omitempty,min=3"`
+	Content  *string `json:"content" validate:"omitempty,min=3"`
 	PhotoURL *string `json:"photo_url" validate:"omitempty,url"`
 }

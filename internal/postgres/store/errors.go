@@ -12,5 +12,9 @@ var (
 
 	ErrPostNotFound = errors.New("post not found")
 
-	ErrReplyNotFound = errors.New("reply not found")
+	ErrCommentNotFound = errors.New("comment not found")
+
+	ErrFailedToLike       = errors.New("failed to like the post")
+	ErrFailedToRemoveLike = errors.New("failed to remove the like from the post")
+	ErrPostAlreadyLiked   = errors.New("post already liked by the user")
 )

@@ -9,7 +9,7 @@ import (
 	"github.com/escoutdoor/social/internal/postgres/store"
 	"github.com/escoutdoor/social/internal/server/responses"
 	"github.com/escoutdoor/social/internal/types"
-	"github.com/escoutdoor/social/pkg/validation"
+	"github.com/escoutdoor/social/pkg/validator"
 	"github.com/go-chi/chi"
 )
 
@@ -39,7 +39,7 @@ func (h *AuthHandler) handleSignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := validation.Validate(input); err != nil {
+	if err := validator.Validate(input); err != nil {
 		responses.BadRequestResponse(w, err)
 		return
 	}
@@ -51,14 +51,14 @@ func (h *AuthHandler) handleSignUp(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("AuthHandler.handleSignUp - AuthStore.SignUp", "error", err)
-		responses.InternalServerResponse(w, ErrIntervalServerError)
+		responses.InternalServerResponse(w, ErrInternalServerError)
 		return
 	}
 
 	token, err := h.store.GenerateToken(r.Context(), id)
 	if err != nil {
 		slog.Error("AuthHandler.handleSignUp - AuthStore.GenerateToken", "error", err)
-		responses.InternalServerResponse(w, ErrIntervalServerError)
+		responses.InternalServerResponse(w, ErrInternalServerError)
 		return
 	}
 	responses.JSON(w, http.StatusOK, envelope{
@@ -74,7 +74,7 @@ func (h *AuthHandler) handleSignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := validation.Validate(input); err != nil {
+	if err := validator.Validate(input); err != nil {
 		responses.BadRequestResponse(w, err)
 		return
 	}
@@ -86,14 +86,14 @@ func (h *AuthHandler) handleSignIn(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("AuthHandler.handleSignIn - AuthStore.SignIn", "error", err)
-		responses.InternalServerResponse(w, ErrIntervalServerError)
+		responses.InternalServerResponse(w, ErrInternalServerError)
 		return
 	}
 
 	token, err := h.store.GenerateToken(r.Context(), user.ID)
 	if err != nil {
 		slog.Error("AuthHandler.handleSignIn - AuthStore.GenerateToken", "error", err)
-		responses.InternalServerResponse(w, ErrIntervalServerError)
+		responses.InternalServerResponse(w, ErrInternalServerError)
 		return
 	}
 	responses.JSON(w, http.StatusOK, envelope{

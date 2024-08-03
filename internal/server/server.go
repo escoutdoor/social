@@ -20,16 +20,18 @@ func New(opts Opts) *http.Server {
 	user := handlers.NewUserHandler(opts.Store.User)
 	auth := handlers.NewAuthHandler(opts.Store.Auth)
 	post := handlers.NewPostHandler(opts.Store.Post)
-	reply := handlers.NewReplyHandler(opts.Store.Reply, opts.Store.Post)
+	like := handlers.NewLikeHandler(opts.Store.Like, opts.Store.Post)
+	comment := handlers.NewCommentHandler(opts.Store.Comment, opts.Store.Post)
 	file := handlers.NewFileHandler(opts.S3Store)
-	api := &Server{
-		user:  user,
-		auth:  auth,
-		post:  post,
-		reply: reply,
-		file:  file,
-	}
 
+	api := &Server{
+		user:    user,
+		auth:    auth,
+		post:    post,
+		like:    like,
+		comment: comment,
+		file:    file,
+	}
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", opts.Config.Port),
 		Handler: api.NewRouter(opts.Store.Auth),
@@ -38,9 +40,10 @@ func New(opts Opts) *http.Server {
 }
 
 type Server struct {
-	user  handlers.UserHandler
-	auth  handlers.AuthHandler
-	post  handlers.PostHandler
-	reply handlers.ReplyHandler
-	file  handlers.FileHandler
+	user    handlers.UserHandler
+	auth    handlers.AuthHandler
+	post    handlers.PostHandler
+	like    handlers.LikeHandler
+	comment handlers.CommentHandler
+	file    handlers.FileHandler
 }

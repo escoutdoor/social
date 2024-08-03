@@ -16,6 +16,5 @@ func New(connStr string) (*sql.DB, error) {
 	if err := conn.Ping(); err != nil {
 		return nil, fmt.Errorf("db ping error: %w", err)
 	}
-
 	return conn, nil
 }

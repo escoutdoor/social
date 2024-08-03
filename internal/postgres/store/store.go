@@ -10,10 +10,11 @@ import (
 )
 
 type Store struct {
-	Auth  AuthStorer
-	User  UserStorer
-	Post  PostStorer
-	Reply ReplyStorer
+	Auth    AuthStorer
+	User    UserStorer
+	Post    PostStorer
+	Like    LikeStorer
+	Comment CommentStorer
 }
 
 type AuthStorer interface {
@@ -37,17 +38,24 @@ type PostStorer interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
-type ReplyStorer interface {
-	Create(ctx context.Context, userID uuid.UUID, postID uuid.UUID, input types.CreateReplyReq) (uuid.UUID, error)
-	GetByID(ctx context.Context, id uuid.UUID) (*types.Reply, error)
+type LikeStorer interface {
+	IsLiked(ctx context.Context, postID uuid.UUID) (bool, error)
+	Like(ctx context.Context, postID uuid.UUID, userID uuid.UUID) error
+	RemoveLike(ctx context.Context, postID uuid.UUID, userID uuid.UUID) error
+}
+
+type CommentStorer interface {
+	Create(ctx context.Context, userID uuid.UUID, postID uuid.UUID, input types.CreateCommentReq) (uuid.UUID, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*types.Comment, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
 func NewStore(db *sql.DB, cfg config.Config) *Store {
 	return &Store{
-		Auth:  NewAuthStore(db, cfg.JWTKey),
-		User:  NewUserStore(db),
-		Post:  NewPostStore(db),
-		Reply: NewReplyStore(db),
+		Auth:    NewAuthStore(db, cfg.JWTKey),
+		User:    NewUserStore(db),
+		Post:    NewPostStore(db),
+		Like:    NewLikeStore(db),
+		Comment: NewCommentStore(db),
 	}
 }

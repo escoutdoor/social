@@ -10,7 +10,7 @@ import (
 	"github.com/escoutdoor/social/internal/server/responses"
 	"github.com/escoutdoor/social/internal/types"
 	"github.com/escoutdoor/social/pkg/hasher"
-	"github.com/escoutdoor/social/pkg/validation"
+	"github.com/escoutdoor/social/pkg/validator"
 	"github.com/go-chi/chi"
 )
 
@@ -47,7 +47,7 @@ func (h *UserHandler) handleGetByID(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("UserHandler.handleGetByID - UserStore.GetByID", "error", err)
-		responses.InternalServerResponse(w, ErrIntervalServerError)
+		responses.InternalServerResponse(w, ErrInternalServerError)
 		return
 	}
 	responses.JSON(w, http.StatusOK, user)
@@ -67,7 +67,7 @@ func (h *UserHandler) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("UserHandler.handleUpdateUser - UserStore.GetByID", "error", err)
-		responses.InternalServerResponse(w, ErrIntervalServerError)
+		responses.InternalServerResponse(w, ErrInternalServerError)
 		return
 	}
 
@@ -76,7 +76,7 @@ func (h *UserHandler) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		responses.BadRequestResponse(w, ErrInvalidRequestBody)
 		return
 	}
-	if err := validation.Validate(input); err != nil {
+	if err := validator.Validate(input); err != nil {
 		responses.BadRequestResponse(w, err)
 		return
 	}
@@ -95,7 +95,7 @@ func (h *UserHandler) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 			return
 		case err != nil && !errors.Is(err, store.ErrUserNotFound):
 			slog.Error("UserHandler.handleUpdateUser - UserStore.GetByEmail", "error", err)
-			responses.InternalServerResponse(w, ErrIntervalServerError)
+			responses.InternalServerResponse(w, ErrInternalServerError)
 			return
 		}
 		u.Email = *input.Email
@@ -104,12 +104,12 @@ func (h *UserHandler) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		u.Password, err = hasher.HashPw(*input.Password)
 		if err != nil {
 			slog.Error("UserHandler.handleUpdateUser - hasher.HashPw", "error", err)
-			responses.InternalServerResponse(w, ErrIntervalServerError)
+			responses.InternalServerResponse(w, ErrInternalServerError)
 			return
 		}
 	}
 	if input.DOB != nil {
-		dob, err := validation.ValidateDate(*input.DOB)
+		dob, err := validator.ValidateDate(*input.DOB)
 		if err != nil {
 			responses.BadRequestResponse(w, err)
 			return
@@ -126,7 +126,7 @@ func (h *UserHandler) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 	user, err := h.store.Update(r.Context(), userIDCtx, *u)
 	if err != nil {
 		slog.Error("UserHandler.handleUpdateUser - UserStore.Update", "error", err)
-		responses.InternalServerResponse(w, ErrIntervalServerError)
+		responses.InternalServerResponse(w, ErrInternalServerError)
 		return
 	}
 	responses.JSON(w, http.StatusOK, user)
@@ -146,7 +146,7 @@ func (h *UserHandler) handleDeleteUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("UserHandler.Delete - UserStore.Delete", "error", err)
-		responses.InternalServerResponse(w, ErrIntervalServerError)
+		responses.InternalServerResponse(w, ErrInternalServerError)
 		return
 	}
 	responses.JSON(w, http.StatusOK, envelope{"message": "user successfully deleted"})

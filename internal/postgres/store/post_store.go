@@ -20,7 +20,7 @@ func NewPostStore(db *sql.DB) *PostStore {
 
 func (s *PostStore) Create(ctx context.Context, userID uuid.UUID, input types.CreatePostReq) (uuid.UUID, error) {
 	stmt, err := s.db.PrepareContext(ctx, `
-		INSERT INTO POSTS(TEXT, USER_ID, PHOTO_URL) VALUES($1, $2, $3)
+		INSERT INTO POSTS(CONTENT, USER_ID, PHOTO_URL) VALUES($1, $2, $3)
 		RETURNING ID
 	`)
 	if err != nil {
@@ -28,7 +28,7 @@ func (s *PostStore) Create(ctx context.Context, userID uuid.UUID, input types.Cr
 	}
 
 	var postID uuid.UUID
-	if err = stmt.QueryRowContext(ctx, input.Text, userID, input.PhotoURL).Scan(&postID); err != nil {
+	if err = stmt.QueryRowContext(ctx, input.Content, userID, input.PhotoURL).Scan(&postID); err != nil {
 		return uuid.Nil, err
 	}
 	return postID, nil
@@ -37,7 +37,7 @@ func (s *PostStore) Create(ctx context.Context, userID uuid.UUID, input types.Cr
 func (s *PostStore) Update(ctx context.Context, postID uuid.UUID, input types.Post) (*types.Post, error) {
 	stmt, err := s.db.PrepareContext(ctx, `
 		UPDATE POSTS SET
-			TEXT = $1,
+			CONTENT = $1,
 			PHOTO_URL = $2
 		WHERE ID = $3
 	`)
@@ -47,7 +47,7 @@ func (s *PostStore) Update(ctx context.Context, postID uuid.UUID, input types.Po
 
 	if _, err = stmt.ExecContext(
 		ctx,
-		input.Text,
+		input.Content,
 		input.PhotoURL,
 		postID,
 	); err != nil {
@@ -98,7 +98,7 @@ func scanPost(rows *sql.Rows) (*types.Post, error) {
 	var post types.Post
 	err := rows.Scan(
 		&post.ID,
-		&post.Text,
+		&post.Content,
 		&post.UserID,
 		&post.PhotoURL,
 		&post.CreatedAt,
