@@ -1,0 +1,11 @@
+[build]
+    cmd = "go build -o ./bin/social ./cmd/api/main.go"
+    bin = "./bin/social"
+    dir = "."
+    include_ext = ["go"]
+    exclude_dir = ["vendor", "tmp"]
+    run_after_build = "chmod +x ./bin/social"
+    poll = true
+
+[log]
+    level = "debug"

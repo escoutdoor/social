@@ -1,6 +1,8 @@
 services:
   api:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - ${PORT}:${PORT}
     environment:
@@ -14,6 +16,8 @@ services:
       - .env
     networks:
       - app
+    volumes:
+      - ./:/app
   postgres:
     image: postgres:16
     volumes:
