@@ -14,12 +14,14 @@ import (
 )
 
 type AuthHandler struct {
-	store store.AuthStorer
+	store     store.AuthStorer
+	validator *validator.Validator
 }
 
-func NewAuthHandler(s store.AuthStorer) AuthHandler {
+func NewAuthHandler(s store.AuthStorer, v *validator.Validator) AuthHandler {
 	return AuthHandler{
-		store: s,
+		store:     s,
+		validator: v,
 	}
 }
 
@@ -39,7 +41,7 @@ func (h *AuthHandler) handleSignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := validator.Validate(input); err != nil {
+	if err := h.validator.Validate(input); err != nil {
 		responses.BadRequestResponse(w, err)
 		return
 	}
@@ -74,7 +76,7 @@ func (h *AuthHandler) handleSignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := validator.Validate(input); err != nil {
+	if err := h.validator.Validate(input); err != nil {
 		responses.BadRequestResponse(w, err)
 		return
 	}

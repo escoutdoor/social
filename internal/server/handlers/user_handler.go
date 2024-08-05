@@ -15,12 +15,14 @@ import (
 )
 
 type UserHandler struct {
-	store store.UserStorer
+	store     store.UserStorer
+	validator *validator.Validator
 }
 
-func NewUserHandler(store store.UserStorer) UserHandler {
+func NewUserHandler(store store.UserStorer, v *validator.Validator) UserHandler {
 	return UserHandler{
-		store: store,
+		store:     store,
+		validator: v,
 	}
 }
 
@@ -76,7 +78,7 @@ func (h *UserHandler) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		responses.BadRequestResponse(w, ErrInvalidRequestBody)
 		return
 	}
-	if err := validator.Validate(input); err != nil {
+	if err := h.validator.Validate(input); err != nil {
 		responses.BadRequestResponse(w, err)
 		return
 	}
@@ -109,7 +111,7 @@ func (h *UserHandler) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if input.DOB != nil {
-		dob, err := validator.ValidateDate(*input.DOB)
+		dob, err := h.validator.ValidateDate(*input.DOB)
 		if err != nil {
 			responses.BadRequestResponse(w, err)
 			return

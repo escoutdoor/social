@@ -16,12 +16,14 @@ import (
 type CommentHandler struct {
 	store     store.CommentStorer
 	postStore store.PostStorer
+	validator *validator.Validator
 }
 
-func NewCommentHandler(s store.CommentStorer, ps store.PostStorer) CommentHandler {
+func NewCommentHandler(s store.CommentStorer, ps store.PostStorer, v *validator.Validator) CommentHandler {
 	return CommentHandler{
 		store:     s,
 		postStore: ps,
+		validator: v,
 	}
 }
 
@@ -61,7 +63,7 @@ func (h *CommentHandler) handleCreateComment(w http.ResponseWriter, r *http.Requ
 		responses.BadRequestResponse(w, ErrInvalidRequestBody)
 		return
 	}
-	if err := validator.Validate(input); err != nil {
+	if err := h.validator.Validate(input); err != nil {
 		responses.BadRequestResponse(w, err)
 		return
 	}

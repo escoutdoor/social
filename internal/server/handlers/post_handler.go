@@ -14,12 +14,14 @@ import (
 )
 
 type PostHandler struct {
-	store store.PostStorer
+	store     store.PostStorer
+	validator *validator.Validator
 }
 
-func NewPostHandler(store store.PostStorer) PostHandler {
+func NewPostHandler(store store.PostStorer, v *validator.Validator) PostHandler {
 	return PostHandler{
-		store: store,
+		store:     store,
+		validator: v,
 	}
 }
 
@@ -44,7 +46,7 @@ func (h *PostHandler) handleCreatePost(w http.ResponseWriter, r *http.Request) {
 		responses.BadRequestResponse(w, ErrInvalidRequestBody)
 		return
 	}
-	if err := validator.Validate(input); err != nil {
+	if err := h.validator.Validate(input); err != nil {
 		responses.BadRequestResponse(w, err)
 		return
 	}
@@ -90,7 +92,7 @@ func (h *PostHandler) handleUpdatePost(w http.ResponseWriter, r *http.Request) {
 		responses.BadRequestResponse(w, ErrInvalidRequestBody)
 		return
 	}
-	if err := validator.Validate(input); err != nil {
+	if err := h.validator.Validate(input); err != nil {
 		responses.BadRequestResponse(w, err)
 		return
 	}

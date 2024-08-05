@@ -10,6 +10,7 @@ import (
 	"github.com/escoutdoor/social/internal/s3"
 	"github.com/escoutdoor/social/internal/server"
 	"github.com/escoutdoor/social/pkg/logger"
+	"github.com/escoutdoor/social/pkg/validator"
 )
 
 func Run() {
@@ -37,8 +38,9 @@ func Run() {
 	}
 	slog.Info("successfully connected to s3")
 
+	validator := validator.New()
 	slog.Info("server is running", slog.Int("port", cfg.Port))
-	s := server.New(server.Opts{Config: cfg, Store: store, S3Store: s3})
+	s := server.New(server.Opts{Config: cfg, Store: store, S3Store: s3, Validator: validator})
 	if err := s.ListenAndServe(); err != nil {
 		slog.Error("server encountered an error", "error", err)
 		os.Exit(1)
