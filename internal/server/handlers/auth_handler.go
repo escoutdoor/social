@@ -51,14 +51,14 @@ func (h *AuthHandler) handleSignUp(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("AuthHandler.handleSignUp - AuthStore.SignUp", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServerError)
+		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 
 	token, err := h.store.GenerateToken(r.Context(), id)
 	if err != nil {
 		slog.Error("AuthHandler.handleSignUp - AuthStore.GenerateToken", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServerError)
+		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 	responses.JSON(w, http.StatusOK, envelope{
@@ -86,14 +86,14 @@ func (h *AuthHandler) handleSignIn(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("AuthHandler.handleSignIn - AuthStore.SignIn", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServerError)
+		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 
 	token, err := h.store.GenerateToken(r.Context(), user.ID)
 	if err != nil {
 		slog.Error("AuthHandler.handleSignIn - AuthStore.GenerateToken", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServerError)
+		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 	responses.JSON(w, http.StatusOK, envelope{

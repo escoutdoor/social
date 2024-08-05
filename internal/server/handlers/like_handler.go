@@ -47,14 +47,14 @@ func (h *LikeHandler) handleLikePost(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("LikeHandler.handleLikePost - PostStore.GetByID", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServerError)
+		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 
 	isLiked, err := h.store.IsLiked(r.Context(), postID)
 	if err != nil {
 		slog.Error("LikeHandler.handleLikePost - LikeStore.IsLiked", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServerError)
+		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 	if isLiked {
@@ -64,7 +64,7 @@ func (h *LikeHandler) handleLikePost(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.store.Like(r.Context(), postID, userID); err != nil {
 		slog.Error("LikeHandler.handleLikePost - LikeStore.Like", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServerError)
+		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 	responses.JSON(w, http.StatusOK, envelope{"message": "you just liked the post"})
@@ -88,7 +88,7 @@ func (h *LikeHandler) handleRemoveLikeFromPost(w http.ResponseWriter, r *http.Re
 			return
 		}
 		slog.Error("LikeHandler.handleRemoveLikeFromPost - PostStore.GetByID", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServerError)
+		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 
@@ -98,7 +98,7 @@ func (h *LikeHandler) handleRemoveLikeFromPost(w http.ResponseWriter, r *http.Re
 			return
 		}
 		slog.Error("LikeHandler.handleRemoveLikeFromPost - LikeStore.RemoveLike", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServerError)
+		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 	responses.JSON(w, http.StatusOK, envelope{"message": "you removed the like from the post"})

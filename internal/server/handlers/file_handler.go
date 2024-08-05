@@ -29,7 +29,7 @@ func (h *FileHandler) Router() *chi.Mux {
 func (h *FileHandler) create(w http.ResponseWriter, r *http.Request) {
 	src, hdr, err := r.FormFile("file")
 	if err != nil {
-		responses.BadRequestResponse(w, ErrNoFileReceived)
+		responses.BadRequestResponse(w, ErrFileNotReceived)
 		return
 	}
 	defer src.Close()
@@ -42,7 +42,7 @@ func (h *FileHandler) create(w http.ResponseWriter, r *http.Request) {
 	url, err := h.minio.Create(f)
 	if err != nil {
 		slog.Error("FileHandler.Create - MinIOClient.Create", "error", err)
-		responses.InternalServerResponse(w, ErrUnableSaveFile)
+		responses.InternalServerResponse(w, ErrFileSaveFailed)
 		return
 	}
 	responses.JSON(w, http.StatusOK, envelope{"message": "file successfully uploaded", "url": url})

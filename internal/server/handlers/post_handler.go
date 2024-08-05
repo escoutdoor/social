@@ -33,7 +33,7 @@ func (h *PostHandler) Router() *chi.Mux {
 }
 
 func (h *PostHandler) handleCreatePost(w http.ResponseWriter, r *http.Request) {
-	userIDCtx, err := getUserIDFromCtx(r)
+	userID, err := getUserIDFromCtx(r)
 	if err != nil {
 		responses.UnauthorizedResponse(w, err)
 		return
@@ -44,23 +44,22 @@ func (h *PostHandler) handleCreatePost(w http.ResponseWriter, r *http.Request) {
 		responses.BadRequestResponse(w, ErrInvalidRequestBody)
 		return
 	}
-
 	if err := validator.Validate(input); err != nil {
 		responses.BadRequestResponse(w, err)
 		return
 	}
 
-	id, err := h.store.Create(r.Context(), userIDCtx, input)
+	id, err := h.store.Create(r.Context(), userID, input)
 	if err != nil {
 		slog.Error("PostHandler.handleCreatePost - PostStore.Create", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServerError)
+		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 	responses.JSON(w, http.StatusCreated, envelope{"id": id})
 }
 
 func (h *PostHandler) handleUpdatePost(w http.ResponseWriter, r *http.Request) {
-	userIDCtx, err := getUserIDFromCtx(r)
+	userID, err := getUserIDFromCtx(r)
 	if err != nil {
 		responses.UnauthorizedResponse(w, err)
 		return
@@ -78,11 +77,11 @@ func (h *PostHandler) handleUpdatePost(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("PostHandler.handleUpdatePost - PostStore.GetByID", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServerError)
+		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
-	if p.UserID != userIDCtx {
-		responses.ForbiddenResponse(w, ErrForbidden)
+	if p.UserID != userID {
+		responses.ForbiddenResponse(w, ErrAccessDenied)
 		return
 	}
 
@@ -105,7 +104,7 @@ func (h *PostHandler) handleUpdatePost(w http.ResponseWriter, r *http.Request) {
 	post, err := h.store.Update(r.Context(), postID, *p)
 	if err != nil {
 		slog.Error("PostHandler.handleUpdatePost - PostStore.Update", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServerError)
+		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 	responses.JSON(w, http.StatusOK, post)
@@ -125,14 +124,25 @@ func (h *PostHandler) handleGetByID(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("PostHandler.handleGetByID - PostStore.GetByID", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServerError)
+		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 	responses.JSON(w, http.StatusOK, post)
 }
 
+func (h *PostHandler) handleGetAll(w http.ResponseWriter, r *http.Request) {
+	posts, err := h.store.GetAll(r.Context())
+	if err != nil {
+		slog.Error("PostHandler.handleGetAll - PostStore.GetAll", "error", err)
+		responses.InternalServerResponse(w, ErrInternalServer)
+		return
+	}
+
+	responses.JSON(w, http.StatusOK, posts)
+}
+
 func (h *PostHandler) handleDeletePost(w http.ResponseWriter, r *http.Request) {
-	userIDCtx, err := getUserIDFromCtx(r)
+	userID, err := getUserIDFromCtx(r)
 	if err != nil {
 		responses.UnauthorizedResponse(w, err)
 		return
@@ -150,18 +160,18 @@ func (h *PostHandler) handleDeletePost(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("PostHandler.handleDeletePost - PostStore.GetByID", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServerError)
+		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
-	if post.UserID != userIDCtx {
-		responses.ForbiddenResponse(w, ErrForbidden)
+	if post.UserID != userID {
+		responses.ForbiddenResponse(w, ErrAccessDenied)
 		return
 	}
 
 	err = h.store.Delete(r.Context(), postID)
 	if err != nil {
 		slog.Error("PostHandler.handleDeletePost - PostStore.Delete", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServerError)
+		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 	responses.JSON(w, http.StatusOK, envelope{"message": "post successfully deleted"})

@@ -47,7 +47,7 @@ func (h *UserHandler) handleGetByID(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("UserHandler.handleGetByID - UserStore.GetByID", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServerError)
+		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 	responses.JSON(w, http.StatusOK, user)
@@ -67,7 +67,7 @@ func (h *UserHandler) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("UserHandler.handleUpdateUser - UserStore.GetByID", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServerError)
+		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 
@@ -95,7 +95,7 @@ func (h *UserHandler) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 			return
 		case err != nil && !errors.Is(err, store.ErrUserNotFound):
 			slog.Error("UserHandler.handleUpdateUser - UserStore.GetByEmail", "error", err)
-			responses.InternalServerResponse(w, ErrInternalServerError)
+			responses.InternalServerResponse(w, ErrInternalServer)
 			return
 		}
 		u.Email = *input.Email
@@ -104,7 +104,7 @@ func (h *UserHandler) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		u.Password, err = hasher.HashPw(*input.Password)
 		if err != nil {
 			slog.Error("UserHandler.handleUpdateUser - hasher.HashPw", "error", err)
-			responses.InternalServerResponse(w, ErrInternalServerError)
+			responses.InternalServerResponse(w, ErrInternalServer)
 			return
 		}
 	}
@@ -126,7 +126,7 @@ func (h *UserHandler) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 	user, err := h.store.Update(r.Context(), userIDCtx, *u)
 	if err != nil {
 		slog.Error("UserHandler.handleUpdateUser - UserStore.Update", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServerError)
+		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 	responses.JSON(w, http.StatusOK, user)
@@ -146,7 +146,7 @@ func (h *UserHandler) handleDeleteUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("UserHandler.Delete - UserStore.Delete", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServerError)
+		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 	responses.JSON(w, http.StatusOK, envelope{"message": "user successfully deleted"})

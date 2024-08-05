@@ -52,7 +52,7 @@ func (h *CommentHandler) handleCreateComment(w http.ResponseWriter, r *http.Requ
 			return
 		}
 		slog.Error("CommentHandler.handleCreateComment - PostStore.GetByID", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServerError)
+		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 
@@ -73,14 +73,14 @@ func (h *CommentHandler) handleCreateComment(w http.ResponseWriter, r *http.Requ
 				return
 			}
 			slog.Error("CommentHandler.handleCreateComment - CommentStore.GetByID", "error", err)
-			responses.InternalServerResponse(w, ErrInternalServerError)
+			responses.InternalServerResponse(w, ErrInternalServer)
 			return
 		}
 	}
 	id, err := h.store.Create(r.Context(), userIDCtx, postID, input)
 	if err != nil {
 		slog.Error("CommentHandler.handleCreateComment - CommentStore.Create", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServerError)
+		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 	responses.JSON(w, http.StatusCreated, envelope{"id": id})
@@ -100,7 +100,7 @@ func (h *CommentHandler) handleGetByID(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("CommentHandler.handleGetByID - CommentStore.GetByID", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServerError)
+		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 	responses.JSON(w, http.StatusOK, comment)
@@ -119,14 +119,14 @@ func (h *CommentHandler) handleGetAll(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		slog.Error("CommentHandler.handleGetAll - PostStore.GetByID", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServerError)
+		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 
 	comments, err := h.store.GetAll(r.Context(), postID)
 	if err != nil {
 		slog.Error("CommentHandler.handleGetAll - CommentStore.GetAll", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServerError)
+		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 	responses.JSON(w, http.StatusOK, envelope{"comments": comments})
@@ -151,18 +151,18 @@ func (h *CommentHandler) handleDeleteComment(w http.ResponseWriter, r *http.Requ
 			return
 		}
 		slog.Error("CommentHandler.handleDeleteComment - CommentStore.GetByID", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServerError)
+		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 	if comment.UserID != userIDCtx {
-		responses.ForbiddenResponse(w, ErrForbidden)
+		responses.ForbiddenResponse(w, ErrAccessDenied)
 		return
 	}
 
 	err = h.store.Delete(r.Context(), commentID)
 	if err != nil {
 		slog.Error("CommentHandler.handleDeleteComment - CommentStore.Delete", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServerError)
+		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 	responses.JSON(w, http.StatusOK, envelope{"message": "comment successfully deleted"})
