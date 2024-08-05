@@ -39,10 +39,12 @@ CREATE TABLE COMMENTS (
     content TEXT NOT NULL,
     user_id UUID NOT NULL,
     post_id UUID NOT NULL,
+    parent_comment_id UUID,
     updated_at TIMESTAMP NOT NULL default now(),
     created_at TIMESTAMP NOT NULL default now(),
     FOREIGN KEY("user_id") REFERENCES USERS("id") ON DELETE CASCADE,
-    FOREIGN KEY("post_id") REFERENCES POSTS("id") ON DELETE CASCADE
+    FOREIGN KEY("post_id") REFERENCES POSTS("id") ON DELETE CASCADE,
+    FOREIGN KEY("parent_comment_id") REFERENCES COMMENTS("id") ON DELETE CASCADE
 );
 
 CREATE TABLE COMMENT_LIKES (
@@ -55,25 +57,11 @@ CREATE TABLE COMMENT_LIKES (
     FOREIGN KEY("comment_id") REFERENCES COMMENTS("id") ON DELETE CASCADE
 );
 
-CREATE TABLE REPLIES (
-    id uuid PRIMARY KEY default gen_random_uuid(),
-    content TEXT NOT NULL,
-    comment_id UUID NOT NULL,
-    parent_reply_id UUID NOT NULL,
-    user_id UUID NOT NULL,
-    updated_at TIMESTAMP NOT NULL default now(),
-    created_at TIMESTAMP NOT NULL default now(),
-    FOREIGN KEY("user_id") REFERENCES USERS("id") ON DELETE SET NULL,
-    FOREIGN KEY("comment_id") REFERENCES COMMENTS("id") ON DELETE CASCADE,
-    FOREIGN KEY("parent_reply_id") REFERENCES REPLIES("id") ON DELETE CASCADE
-);  
-
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
 
-DROP TABLE REPLIES;
 DROP TABLE POST_LIKES;
 DROP TABLE COMMENT_LIKES;
 DROP TABLE COMMENTS;

@@ -30,6 +30,7 @@ func (h *CommentHandler) Router() *chi.Mux {
 	r.Post("/{id}", h.handleCreateComment)
 	r.Get("/{id}", h.handleGetByID)
 	r.Delete("/{id}", h.handleDeleteComment)
+	r.Get("/all/{id}", h.handleGetAll)
 	return r
 }
 
@@ -65,6 +66,17 @@ func (h *CommentHandler) handleCreateComment(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	if input.ParentCommentID != nil {
+		if _, err := h.store.GetByID(r.Context(), *input.ParentCommentID); err != nil {
+			if errors.Is(err, store.ErrCommentNotFound) {
+				responses.NotFoundResponse(w, err)
+				return
+			}
+			slog.Error("CommentHandler.handleCreateComment - CommentStore.GetByID", "error", err)
+			responses.InternalServerResponse(w, ErrInternalServerError)
+			return
+		}
+	}
 	id, err := h.store.Create(r.Context(), userIDCtx, postID, input)
 	if err != nil {
 		slog.Error("CommentHandler.handleCreateComment - CommentStore.Create", "error", err)
@@ -92,6 +104,32 @@ func (h *CommentHandler) handleGetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	responses.JSON(w, http.StatusOK, comment)
+}
+
+func (h *CommentHandler) handleGetAll(w http.ResponseWriter, r *http.Request) {
+	postID, err := getIDParam(r)
+	if err != nil {
+		responses.BadRequestResponse(w, err)
+		return
+	}
+
+	if _, err := h.postStore.GetByID(r.Context(), postID); err != nil {
+		if errors.Is(err, store.ErrPostNotFound) {
+			responses.NotFoundResponse(w, err)
+			return
+		}
+		slog.Error("CommentHandler.handleGetAll - PostStore.GetByID", "error", err)
+		responses.InternalServerResponse(w, ErrInternalServerError)
+		return
+	}
+
+	comments, err := h.store.GetAll(r.Context(), postID)
+	if err != nil {
+		slog.Error("CommentHandler.handleGetAll - CommentStore.GetAll", "error", err)
+		responses.InternalServerResponse(w, ErrInternalServerError)
+		return
+	}
+	responses.JSON(w, http.StatusOK, envelope{"comments": comments})
 }
 
 func (h *CommentHandler) handleDeleteComment(w http.ResponseWriter, r *http.Request) {
