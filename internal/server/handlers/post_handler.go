@@ -109,7 +109,7 @@ func (h *PostHandler) handleUpdatePost(w http.ResponseWriter, r *http.Request) {
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
-	responses.JSON(w, http.StatusOK, post)
+	responses.JSON(w, http.StatusOK, envelope{"post": post})
 }
 
 func (h *PostHandler) handleGetByID(w http.ResponseWriter, r *http.Request) {
@@ -129,7 +129,7 @@ func (h *PostHandler) handleGetByID(w http.ResponseWriter, r *http.Request) {
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
-	responses.JSON(w, http.StatusOK, post)
+	responses.JSON(w, http.StatusOK, envelope{"post": post})
 }
 
 func (h *PostHandler) handleGetAll(w http.ResponseWriter, r *http.Request) {
@@ -140,7 +140,7 @@ func (h *PostHandler) handleGetAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	responses.JSON(w, http.StatusOK, posts)
+	responses.JSON(w, http.StatusOK, envelope{"posts": posts})
 }
 
 func (h *PostHandler) handleDeletePost(w http.ResponseWriter, r *http.Request) {

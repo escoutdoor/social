@@ -105,7 +105,7 @@ func (h *CommentHandler) handleGetByID(w http.ResponseWriter, r *http.Request) {
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
-	responses.JSON(w, http.StatusOK, comment)
+	responses.JSON(w, http.StatusOK, envelope{"comment": comment})
 }
 
 func (h *CommentHandler) handleGetAll(w http.ResponseWriter, r *http.Request) {

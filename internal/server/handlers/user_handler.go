@@ -52,7 +52,7 @@ func (h *UserHandler) handleGetByID(w http.ResponseWriter, r *http.Request) {
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
-	responses.JSON(w, http.StatusOK, user)
+	responses.JSON(w, http.StatusOK, envelope{"user": user})
 }
 
 func (h *UserHandler) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
@@ -131,7 +131,7 @@ func (h *UserHandler) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
-	responses.JSON(w, http.StatusOK, user)
+	responses.JSON(w, http.StatusOK, envelope{"user": user})
 }
 
 func (h *UserHandler) handleDeleteUser(w http.ResponseWriter, r *http.Request) {

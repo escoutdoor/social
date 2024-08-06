@@ -40,9 +40,12 @@ type PostStorer interface {
 }
 
 type LikeStorer interface {
-	IsLiked(ctx context.Context, postID uuid.UUID) (bool, error)
-	Like(ctx context.Context, postID uuid.UUID, userID uuid.UUID) error
-	RemoveLike(ctx context.Context, postID uuid.UUID, userID uuid.UUID) error
+	IsPostLiked(ctx context.Context, postID uuid.UUID) (bool, error)
+	IsCommentLiked(ctx context.Context, commentID uuid.UUID) (bool, error)
+	LikePost(ctx context.Context, postID uuid.UUID, userID uuid.UUID) error
+	LikeComment(ctx context.Context, commentID uuid.UUID, userID uuid.UUID) error
+	RemoveLikeFromPost(ctx context.Context, postID uuid.UUID, userID uuid.UUID) error
+	RemoveLikeFromComment(ctx context.Context, commentID uuid.UUID, userID uuid.UUID) error
 }
 
 type CommentStorer interface {

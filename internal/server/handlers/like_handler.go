@@ -11,21 +11,30 @@ import (
 )
 
 type LikeHandler struct {
-	store     store.LikeStorer
-	postStore store.PostStorer
+	store        store.LikeStorer
+	postStore    store.PostStorer
+	commentStore store.CommentStorer
 }
 
-func NewLikeHandler(s store.LikeStorer, postStore store.PostStorer) LikeHandler {
+func NewLikeHandler(s store.LikeStorer, postStore store.PostStorer, commentStore store.CommentStorer) LikeHandler {
 	return LikeHandler{
-		store:     s,
-		postStore: postStore,
+		store:        s,
+		postStore:    postStore,
+		commentStore: commentStore,
 	}
 }
 
 func (h *LikeHandler) Router() *chi.Mux {
 	r := chi.NewRouter()
-	r.Post("/{id}", h.handleLikePost)
-	r.Delete("/{id}", h.handleRemoveLikeFromPost)
+	// likes/posts/id
+	r.Route("/posts", func(r chi.Router) {
+		r.Post("/{id}", h.handleLikePost)
+		r.Delete("/{id}", h.handleRemoveLikeFromPost)
+	})
+	r.Route("/comments", func(r chi.Router) {
+		r.Post("/{id}", h.handleLikeComment)
+		r.Delete("/{id}", h.handleRemoveLikeFromComment)
+	})
 	return r
 }
 
@@ -51,19 +60,19 @@ func (h *LikeHandler) handleLikePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	isLiked, err := h.store.IsLiked(r.Context(), postID)
+	isLiked, err := h.store.IsPostLiked(r.Context(), postID)
 	if err != nil {
-		slog.Error("LikeHandler.handleLikePost - LikeStore.IsLiked", "error", err)
+		slog.Error("LikeHandler.handleLikePost - LikeStore.IsPostLiked", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 	if isLiked {
-		responses.BadRequestResponse(w, store.ErrPostAlreadyLiked)
+		responses.BadRequestResponse(w, store.ErrAlreadyLiked)
 		return
 	}
 
-	if err := h.store.Like(r.Context(), postID, userID); err != nil {
-		slog.Error("LikeHandler.handleLikePost - LikeStore.Like", "error", err)
+	if err := h.store.LikePost(r.Context(), postID, userID); err != nil {
+		slog.Error("LikeHandler.handleLikePost - LikeStore.LikePost", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
@@ -92,14 +101,89 @@ func (h *LikeHandler) handleRemoveLikeFromPost(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	if err := h.store.RemoveLike(r.Context(), postID, userID); err != nil {
-		if errors.Is(err, store.ErrFailedToRemoveLike) {
+	if err := h.store.RemoveLikeFromPost(r.Context(), postID, userID); err != nil {
+		if errors.Is(err, store.ErrRemoveLikeFailed) {
 			responses.BadRequestResponse(w, err)
 			return
 		}
-		slog.Error("LikeHandler.handleRemoveLikeFromPost - LikeStore.RemoveLike", "error", err)
+		slog.Error("LikeHandler.handleRemoveLikeFromPost - LikeStore.RemoveLikeFromPost", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 	responses.JSON(w, http.StatusOK, envelope{"message": "you removed the like from the post"})
+}
+
+func (h *LikeHandler) handleLikeComment(w http.ResponseWriter, r *http.Request) {
+	commentID, err := getIDParam(r)
+	if err != nil {
+		responses.BadRequestResponse(w, err)
+		return
+	}
+	userID, err := getUserIDFromCtx(r)
+	if err != nil {
+		responses.UnauthorizedResponse(w, err)
+		return
+	}
+
+	if _, err = h.commentStore.GetByID(r.Context(), commentID); err != nil {
+		if errors.Is(err, store.ErrCommentNotFound) {
+			responses.NotFoundResponse(w, err)
+			return
+		}
+		slog.Error("LikeHandler.handleLikeComment - CommentStore.GetByID", "error", err)
+		responses.InternalServerResponse(w, ErrInternalServer)
+		return
+	}
+
+	isLiked, err := h.store.IsCommentLiked(r.Context(), commentID)
+	if err != nil {
+		slog.Error("LikeHandler.handleLikeComment - LikeStore.IsCommentLiked", "error", err)
+		responses.InternalServerResponse(w, ErrInternalServer)
+		return
+	}
+	if isLiked {
+		responses.BadRequestResponse(w, store.ErrAlreadyLiked)
+		return
+	}
+
+	if err := h.store.LikeComment(r.Context(), commentID, userID); err != nil {
+		slog.Error("LikeHandler.handleLikeComment - LikeStore.LikeComment", "error", err)
+		responses.InternalServerResponse(w, ErrInternalServer)
+		return
+	}
+	responses.JSON(w, http.StatusOK, envelope{"message": "you just liked the comment"})
+}
+
+func (h *LikeHandler) handleRemoveLikeFromComment(w http.ResponseWriter, r *http.Request) {
+	commentID, err := getIDParam(r)
+	if err != nil {
+		responses.BadRequestResponse(w, err)
+		return
+	}
+	userID, err := getUserIDFromCtx(r)
+	if err != nil {
+		responses.UnauthorizedResponse(w, err)
+		return
+	}
+
+	if _, err := h.commentStore.GetByID(r.Context(), commentID); err != nil {
+		if errors.Is(err, store.ErrCommentNotFound) {
+			responses.NotFoundResponse(w, err)
+			return
+		}
+		slog.Error("LikeHandler.handleRemoveLikeFromComment - CommentStore.GetByID", "error", err)
+		responses.InternalServerResponse(w, ErrInternalServer)
+		return
+	}
+
+	if err := h.store.RemoveLikeFromComment(r.Context(), commentID, userID); err != nil {
+		if errors.Is(err, store.ErrRemoveLikeFailed) {
+			responses.BadRequestResponse(w, err)
+			return
+		}
+		slog.Error("LikeHandler.handleRemoveLikeFromComment - LikeStore.RemoveLikeFromComment", "error", err)
+		responses.InternalServerResponse(w, ErrInternalServer)
+		return
+	}
+	responses.JSON(w, http.StatusOK, envelope{"message": "you removed the like from the comment"})
 }
