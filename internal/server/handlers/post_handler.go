@@ -28,9 +28,11 @@ func NewPostHandler(store store.PostStorer, v *validator.Validator) PostHandler 
 func (h *PostHandler) Router() *chi.Mux {
 	r := chi.NewRouter()
 	r.Post("/", h.handleCreatePost)
-	r.Put("/{id}", h.handleUpdatePost)
+	r.Get("/", h.handleGetAll)
 	r.Get("/{id}", h.handleGetByID)
+	r.Put("/{id}", h.handleUpdatePost)
 	r.Delete("/{id}", h.handleDeletePost)
+
 	return r
 }
 

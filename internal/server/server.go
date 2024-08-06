@@ -36,7 +36,7 @@ func New(opts Opts) *http.Server {
 	}
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", opts.Config.Port),
-		Handler: api.NewRouter(opts.Store.Auth),
+		Handler: api.NewRouter(opts.Store.Auth, opts.Store.User),
 	}
 	return server
 }

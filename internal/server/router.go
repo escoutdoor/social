@@ -10,7 +10,7 @@ import (
 	"github.com/go-chi/chi/middleware"
 )
 
-func (s *Server) NewRouter(authStore store.AuthStorer) *chi.Mux {
+func (s *Server) NewRouter(authStore store.AuthStorer, userStore store.UserStorer) *chi.Mux {
 	router := chi.NewRouter()
 	router.Use(middleware.StripSlashes)
 
@@ -18,7 +18,7 @@ func (s *Server) NewRouter(authStore store.AuthStorer) *chi.Mux {
 		fmt.Fprint(w, "server is ok")
 	})
 
-	authMiddleware := middlewares.NewAuthMiddleware(authStore)
+	authMiddleware := middlewares.NewAuthMiddleware(authStore, userStore)
 	router.Route("/v1", func(r chi.Router) {
 		r.Mount("/auth", s.auth.Router())
 		r.Group(func(r chi.Router) {

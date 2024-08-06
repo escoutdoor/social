@@ -31,8 +31,8 @@ func (h *CommentHandler) Router() *chi.Mux {
 	r := chi.NewRouter()
 	r.Post("/{id}", h.handleCreateComment)
 	r.Get("/{id}", h.handleGetByID)
-	r.Delete("/{id}", h.handleDeleteComment)
 	r.Get("/all/{id}", h.handleGetAll)
+	r.Delete("/{id}", h.handleDeleteComment)
 	return r
 }
 
