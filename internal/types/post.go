@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -13,6 +14,24 @@ type Post struct {
 	PhotoURL  *string   `json:"photo_url,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+func (p Post) MarshalBinary() ([]byte, error) {
+	return json.Marshal(p)
+}
+
+func (p *Post) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, p)
+}
+
+type Posts []Post
+
+func (p Posts) MarshalBinary() ([]byte, error) {
+	return json.Marshal(p)
+}
+
+func (p *Posts) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, p)
 }
 
 type CreatePostReq struct {

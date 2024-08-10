@@ -15,8 +15,8 @@ func JSON(w http.ResponseWriter, status int, v any) {
 	json.NewEncoder(w).Encode(v)
 }
 
-func ErrorResponse(w http.ResponseWriter, status int, message string) {
-	JSON(w, status, ErrResponse{Error: message})
+func ErrorResponse(w http.ResponseWriter, status int, err string) {
+	JSON(w, status, ErrResponse{Error: err})
 }
 
 func InternalServerResponse(w http.ResponseWriter, err error) {
