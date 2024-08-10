@@ -7,6 +7,7 @@ import (
 type Config struct {
 	Port        int    `envconfig:"PORT" default:"8080"`
 	PostgresURL string `envconfig:"POSTGRES_URL" required:"true"`
+	RedisURL    string `envconfig:"REDIS_URL" required:"true"`
 	JWTKey      string `envconfig:"JWT_SIGN_KEY" required:"true"`
 
 	MinIOHost       string `envconfig:"MINIO_HOST" required:"true"`

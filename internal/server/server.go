@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/escoutdoor/social/internal/cache"
 	"github.com/escoutdoor/social/internal/config"
 	"github.com/escoutdoor/social/internal/postgres/store"
 	"github.com/escoutdoor/social/internal/s3"
@@ -13,15 +14,16 @@ import (
 
 type Opts struct {
 	Config    config.Config
-	S3Store   *s3.MinIOClient
 	Store     *store.Store
+	S3Store   *s3.MinIOClient
+	Cache     *cache.Cache
 	Validator *validator.Validator
 }
 
 func New(opts Opts) *http.Server {
 	user := handlers.NewUserHandler(opts.Store.User, opts.Validator)
 	auth := handlers.NewAuthHandler(opts.Store.Auth, opts.Validator)
-	post := handlers.NewPostHandler(opts.Store.Post, opts.Validator)
+	post := handlers.NewPostHandler(opts.Store.Post, opts.Cache, opts.Validator)
 	like := handlers.NewLikeHandler(opts.Store.Like, opts.Store.Post, opts.Store.Comment)
 	comment := handlers.NewCommentHandler(opts.Store.Comment, opts.Store.Post, opts.Validator)
 	file := handlers.NewFileHandler(opts.S3Store)

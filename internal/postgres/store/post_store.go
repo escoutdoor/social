@@ -18,20 +18,20 @@ func NewPostStore(db *sql.DB) *PostStore {
 	}
 }
 
-func (s *PostStore) Create(ctx context.Context, userID uuid.UUID, input types.CreatePostReq) (uuid.UUID, error) {
-	var id uuid.UUID
+func (s *PostStore) Create(ctx context.Context, userID uuid.UUID, input types.CreatePostReq) (*types.Post, error) {
 	stmt, err := s.db.PrepareContext(ctx, `
 		INSERT INTO POSTS(CONTENT, USER_ID, PHOTO_URL) VALUES($1, $2, $3)
-		RETURNING ID
+		RETURNING ID, CONTENT, USER_ID, PROTO_URL, CREATED_AT, UPDATED_AT
 	`)
 	if err != nil {
-		return id, err
+		return nil, err
 	}
 
-	if err = stmt.QueryRowContext(ctx, input.Content, userID, input.PhotoURL).Scan(&id); err != nil {
-		return id, err
+	rows, err := stmt.QueryContext(ctx, input.Content, userID, input.PhotoURL)
+	if err != nil {
+		return nil, err
 	}
-	return id, nil
+	return scanPost(rows)
 }
 
 func (s *PostStore) Update(ctx context.Context, postID uuid.UUID, input types.Post) (*types.Post, error) {

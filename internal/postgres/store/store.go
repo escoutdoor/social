@@ -32,7 +32,7 @@ type UserStorer interface {
 }
 
 type PostStorer interface {
-	Create(ctx context.Context, userID uuid.UUID, input types.CreatePostReq) (uuid.UUID, error)
+	Create(ctx context.Context, userID uuid.UUID, input types.CreatePostReq) (*types.Post, error)
 	Update(ctx context.Context, postID uuid.UUID, input types.Post) (*types.Post, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*types.Post, error)
 	GetAll(ctx context.Context) ([]types.Post, error)
