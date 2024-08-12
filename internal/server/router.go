@@ -7,12 +7,14 @@ import (
 	"github.com/escoutdoor/social/internal/postgres/store"
 	"github.com/escoutdoor/social/internal/server/middlewares"
 	"github.com/escoutdoor/social/internal/server/responses"
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 func (s *Server) NewRouter(authStore store.AuthStorer, userStore store.UserStorer) *chi.Mux {
 	router := chi.NewRouter()
+	router.Use(middleware.RequestID)
+	router.Use(middleware.RealIP)
 	router.Use(middleware.StripSlashes)
 	router.Use(middleware.CleanPath)
 	router.MethodNotAllowed(methodNotAllowed)

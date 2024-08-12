@@ -13,7 +13,7 @@ import (
 	"github.com/escoutdoor/social/internal/server/responses"
 	"github.com/escoutdoor/social/internal/types"
 	"github.com/escoutdoor/social/pkg/validator"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )

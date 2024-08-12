@@ -7,7 +7,7 @@ import (
 	"github.com/escoutdoor/social/internal/s3"
 	"github.com/escoutdoor/social/internal/server/responses"
 	"github.com/escoutdoor/social/internal/types"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 )
 
 type FileHandler struct {

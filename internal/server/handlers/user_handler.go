@@ -11,7 +11,7 @@ import (
 	"github.com/escoutdoor/social/internal/types"
 	"github.com/escoutdoor/social/pkg/hasher"
 	"github.com/escoutdoor/social/pkg/validator"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 )
 
 type UserHandler struct {

@@ -7,7 +7,7 @@ import (
 
 	"github.com/escoutdoor/social/internal/postgres/store"
 	"github.com/escoutdoor/social/internal/server/responses"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 )
 
 type LikeHandler struct {

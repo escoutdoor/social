@@ -7,7 +7,7 @@ import (
 
 	"github.com/escoutdoor/social/internal/server/middlewares"
 	"github.com/escoutdoor/social/internal/types"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
