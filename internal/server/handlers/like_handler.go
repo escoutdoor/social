@@ -44,7 +44,7 @@ func (h *LikeHandler) handleLikePost(w http.ResponseWriter, r *http.Request) {
 		responses.BadRequestResponse(w, err)
 		return
 	}
-	userID, err := getUserIDFromCtx(r)
+	user, err := getUserFromCtx(r)
 	if err != nil {
 		responses.UnauthorizedResponse(w, err)
 		return
@@ -71,7 +71,7 @@ func (h *LikeHandler) handleLikePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.store.LikePost(r.Context(), postID, userID); err != nil {
+	if err := h.store.LikePost(r.Context(), postID, user.ID); err != nil {
 		slog.Error("LikeHandler.handleLikePost - LikeStore.LikePost", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return
@@ -85,7 +85,7 @@ func (h *LikeHandler) handleRemoveLikeFromPost(w http.ResponseWriter, r *http.Re
 		responses.BadRequestResponse(w, err)
 		return
 	}
-	userID, err := getUserIDFromCtx(r)
+	user, err := getUserFromCtx(r)
 	if err != nil {
 		responses.UnauthorizedResponse(w, err)
 		return
@@ -101,7 +101,7 @@ func (h *LikeHandler) handleRemoveLikeFromPost(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	if err := h.store.RemoveLikeFromPost(r.Context(), postID, userID); err != nil {
+	if err := h.store.RemoveLikeFromPost(r.Context(), postID, user.ID); err != nil {
 		if errors.Is(err, store.ErrRemoveLikeFailed) {
 			responses.BadRequestResponse(w, err)
 			return
@@ -119,7 +119,7 @@ func (h *LikeHandler) handleLikeComment(w http.ResponseWriter, r *http.Request) 
 		responses.BadRequestResponse(w, err)
 		return
 	}
-	userID, err := getUserIDFromCtx(r)
+	user, err := getUserFromCtx(r)
 	if err != nil {
 		responses.UnauthorizedResponse(w, err)
 		return
@@ -146,7 +146,7 @@ func (h *LikeHandler) handleLikeComment(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if err := h.store.LikeComment(r.Context(), commentID, userID); err != nil {
+	if err := h.store.LikeComment(r.Context(), commentID, user.ID); err != nil {
 		slog.Error("LikeHandler.handleLikeComment - LikeStore.LikeComment", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return
@@ -160,7 +160,7 @@ func (h *LikeHandler) handleRemoveLikeFromComment(w http.ResponseWriter, r *http
 		responses.BadRequestResponse(w, err)
 		return
 	}
-	userID, err := getUserIDFromCtx(r)
+	user, err := getUserFromCtx(r)
 	if err != nil {
 		responses.UnauthorizedResponse(w, err)
 		return
@@ -176,7 +176,7 @@ func (h *LikeHandler) handleRemoveLikeFromComment(w http.ResponseWriter, r *http
 		return
 	}
 
-	if err := h.store.RemoveLikeFromComment(r.Context(), commentID, userID); err != nil {
+	if err := h.store.RemoveLikeFromComment(r.Context(), commentID, user.ID); err != nil {
 		if errors.Is(err, store.ErrRemoveLikeFailed) {
 			responses.BadRequestResponse(w, err)
 			return

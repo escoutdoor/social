@@ -48,7 +48,7 @@ func generateRDBPostKey(id uuid.UUID) string {
 }
 
 func (h *PostHandler) handleCreatePost(w http.ResponseWriter, r *http.Request) {
-	userID, err := getUserIDFromCtx(r)
+	user, err := getUserFromCtx(r)
 	if err != nil {
 		responses.UnauthorizedResponse(w, err)
 		return
@@ -64,7 +64,7 @@ func (h *PostHandler) handleCreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	post, err := h.store.Create(r.Context(), userID, input)
+	post, err := h.store.Create(r.Context(), user.ID, input)
 	if err != nil {
 		slog.Error("PostHandler.handleCreatePost - PostStore.Create", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
@@ -81,7 +81,7 @@ func (h *PostHandler) handleCreatePost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PostHandler) handleUpdatePost(w http.ResponseWriter, r *http.Request) {
-	userID, err := getUserIDFromCtx(r)
+	user, err := getUserFromCtx(r)
 	if err != nil {
 		responses.UnauthorizedResponse(w, err)
 		return
@@ -112,7 +112,7 @@ func (h *PostHandler) handleUpdatePost(w http.ResponseWriter, r *http.Request) {
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
-	if p.UserID != userID {
+	if p.UserID != user.ID {
 		responses.ForbiddenResponse(w, ErrAccessDenied)
 		return
 	}
@@ -209,7 +209,7 @@ func (h *PostHandler) handleGetAll(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PostHandler) handleDeletePost(w http.ResponseWriter, r *http.Request) {
-	userID, err := getUserIDFromCtx(r)
+	user, err := getUserFromCtx(r)
 	if err != nil {
 		responses.UnauthorizedResponse(w, err)
 		return
@@ -240,7 +240,7 @@ func (h *PostHandler) handleDeletePost(w http.ResponseWriter, r *http.Request) {
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
-	if post.UserID != userID {
+	if post.UserID != user.ID {
 		responses.ForbiddenResponse(w, ErrAccessDenied)
 		return
 	}

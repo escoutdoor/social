@@ -10,7 +10,7 @@ import (
 
 	"github.com/escoutdoor/social/internal/types"
 	"github.com/escoutdoor/social/pkg/hasher"
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
@@ -82,14 +82,14 @@ func (s *AuthStore) SignIn(ctx context.Context, input types.LoginReq) (*types.Us
 
 type AuthTokenClaims struct {
 	UserID uuid.UUID `json:"user_id"`
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }
 
 func (s *AuthStore) GenerateToken(ctx context.Context, userID uuid.UUID) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &AuthTokenClaims{
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
-			IssuedAt:  time.Now().Unix(),
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 		UserID: userID,
 	})
@@ -111,12 +111,20 @@ func (s *AuthStore) ParseToken(jwtToken string) (uuid.UUID, error) {
 		return []byte(s.jwtKey), nil
 	})
 	if err != nil {
-		return uuid.Nil, err
+		switch {
+		case errors.Is(err, jwt.ErrTokenMalformed):
+			return uuid.Nil, fmt.Errorf("it doesn't look like a token")
+		case errors.Is(err, jwt.ErrTokenSignatureInvalid):
+			return uuid.Nil, fmt.Errorf("invalid token signature")
+		case errors.Is(err, jwt.ErrTokenExpired) || errors.Is(err, jwt.ErrTokenNotValidYet):
+			return uuid.Nil, fmt.Errorf("token is either expired or not active yet")
+		default:
+			return uuid.Nil, ErrInvalidToken
+		}
 	}
-
 	claims, ok := token.Claims.(*AuthTokenClaims)
 	if !ok {
-		return uuid.Nil, ErrInvalidToken
+		return uuid.Nil, err
 	}
 	return claims.UserID, nil
 }

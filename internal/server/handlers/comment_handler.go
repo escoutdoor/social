@@ -37,7 +37,7 @@ func (h *CommentHandler) Router() *chi.Mux {
 }
 
 func (h *CommentHandler) handleCreateComment(w http.ResponseWriter, r *http.Request) {
-	userIDCtx, err := getUserIDFromCtx(r)
+	user, err := getUserFromCtx(r)
 	if err != nil {
 		responses.UnauthorizedResponse(w, err)
 		return
@@ -79,7 +79,7 @@ func (h *CommentHandler) handleCreateComment(w http.ResponseWriter, r *http.Requ
 			return
 		}
 	}
-	id, err := h.store.Create(r.Context(), userIDCtx, postID, input)
+	id, err := h.store.Create(r.Context(), user.ID, postID, input)
 	if err != nil {
 		slog.Error("CommentHandler.handleCreateComment - CommentStore.Create", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
@@ -135,7 +135,7 @@ func (h *CommentHandler) handleGetAll(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CommentHandler) handleDeleteComment(w http.ResponseWriter, r *http.Request) {
-	userIDCtx, err := getUserIDFromCtx(r)
+	user, err := getUserFromCtx(r)
 	if err != nil {
 		responses.UnauthorizedResponse(w, err)
 		return
@@ -156,7 +156,7 @@ func (h *CommentHandler) handleDeleteComment(w http.ResponseWriter, r *http.Requ
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
-	if comment.UserID != userIDCtx {
+	if comment.UserID != user.ID {
 		responses.ForbiddenResponse(w, ErrAccessDenied)
 		return
 	}

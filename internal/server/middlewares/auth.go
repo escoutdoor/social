@@ -3,15 +3,15 @@ package middlewares
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 
 	"github.com/escoutdoor/social/internal/postgres/store"
-	"github.com/escoutdoor/social/internal/server/handlers"
 	"github.com/escoutdoor/social/internal/server/responses"
 )
 
-const userIDCtx string = "user_id"
+const UserCtxKey string = "user"
 
 type AuthMiddleware struct {
 	authStore store.AuthStorer
@@ -37,21 +37,22 @@ func (m *AuthMiddleware) Auth(next http.Handler) http.Handler {
 		id, err := m.authStore.ParseToken(jwtToken)
 		if err != nil {
 			slog.Error("AuthMiddleware: failed to parse token", "error", err.Error())
-			responses.UnauthorizedResponse(w, store.ErrInvalidToken)
+			responses.UnauthorizedResponse(w, fmt.Errorf("failed to parse token: %w", err))
 			return
 		}
 
-		if _, err := m.userStore.GetByID(r.Context(), id); err != nil {
+		user, err := m.userStore.GetByID(r.Context(), id)
+		if err != nil {
 			if errors.Is(err, store.ErrUserNotFound) {
-				responses.UnauthorizedResponse(w, store.ErrInvalidToken)
+				responses.UnauthorizedResponse(w, err)
 				return
 			}
 			slog.Error("AuthMiddleware - UserStore.GetByID", "error", err.Error())
-			responses.InternalServerResponse(w, handlers.ErrInternalServer)
+			responses.InternalServerResponse(w, fmt.Errorf("failed to authorize"))
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), userIDCtx, id)
+		ctx := context.WithValue(r.Context(), UserCtxKey, user)
 		req := r.WithContext(ctx)
 		next.ServeHTTP(w, req)
 	})

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/escoutdoor/social/internal/server/middlewares"
+	"github.com/escoutdoor/social/internal/types"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
 )
@@ -17,16 +19,12 @@ func getIDParam(r *http.Request) (uuid.UUID, error) {
 	return id, nil
 }
 
-func getUserIDFromCtx(r *http.Request) (uuid.UUID, error) {
-	userID, ok := r.Context().Value("user_id").(uuid.UUID)
+func getUserFromCtx(r *http.Request) (*types.User, error) {
+	user, ok := r.Context().Value(middlewares.UserCtxKey).(*types.User)
 	if !ok {
-		return uuid.Nil, fmt.Errorf("no user")
+		return nil, fmt.Errorf("failed to get user from context")
 	}
-	pu, err := uuid.Parse(userID.String())
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("no user")
-	}
-	return pu, nil
+	return user, nil
 }
 
 type envelope map[string]interface{}

@@ -56,20 +56,9 @@ func (h *UserHandler) handleGetByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
-	userIDCtx, err := getUserIDFromCtx(r)
+	user, err := getUserFromCtx(r)
 	if err != nil {
 		responses.UnauthorizedResponse(w, err)
-		return
-	}
-
-	u, err := h.store.GetByID(r.Context(), userIDCtx)
-	if err != nil {
-		if errors.Is(err, store.ErrUserNotFound) {
-			responses.NotFoundResponse(w, store.ErrUserNotFound)
-			return
-		}
-		slog.Error("UserHandler.handleUpdateUser - UserStore.GetByID", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 
@@ -84,10 +73,10 @@ func (h *UserHandler) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if input.FirstName != nil {
-		u.FirstName = *input.FirstName
+		user.FirstName = *input.FirstName
 	}
 	if input.LastName != nil {
-		u.LastName = *input.LastName
+		user.LastName = *input.LastName
 	}
 	if input.Email != nil {
 		ok, err := h.store.GetByEmail(r.Context(), *input.Email)
@@ -100,10 +89,10 @@ func (h *UserHandler) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 			responses.InternalServerResponse(w, ErrInternalServer)
 			return
 		}
-		u.Email = *input.Email
+		user.Email = *input.Email
 	}
-	if input.Password != nil && !hasher.ComparePw(*input.Password, u.Password) {
-		u.Password, err = hasher.HashPw(*input.Password)
+	if input.Password != nil && !hasher.ComparePw(*input.Password, user.Password) {
+		user.Password, err = hasher.HashPw(*input.Password)
 		if err != nil {
 			slog.Error("UserHandler.handleUpdateUser - hasher.HashPw", "error", err)
 			responses.InternalServerResponse(w, ErrInternalServer)
@@ -116,32 +105,32 @@ func (h *UserHandler) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 			responses.BadRequestResponse(w, err)
 			return
 		}
-		u.DOB = &dob
+		user.DOB = &dob
 	}
 	if input.Bio != nil {
-		u.Bio = input.Bio
+		user.Bio = input.Bio
 	}
 	if input.AvatarURL != nil {
-		u.AvatarURL = input.AvatarURL
+		user.AvatarURL = input.AvatarURL
 	}
 
-	user, err := h.store.Update(r.Context(), userIDCtx, *u)
+	uu, err := h.store.Update(r.Context(), user.ID, *user)
 	if err != nil {
 		slog.Error("UserHandler.handleUpdateUser - UserStore.Update", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
-	responses.JSON(w, http.StatusOK, envelope{"user": user})
+	responses.JSON(w, http.StatusOK, envelope{"user": uu})
 }
 
 func (h *UserHandler) handleDeleteUser(w http.ResponseWriter, r *http.Request) {
-	userIDCtx, err := getUserIDFromCtx(r)
+	user, err := getUserFromCtx(r)
 	if err != nil {
 		responses.UnauthorizedResponse(w, err)
 		return
 	}
 
-	err = h.store.Delete(r.Context(), userIDCtx)
+	err = h.store.Delete(r.Context(), user.ID)
 	if err != nil {
 		if errors.Is(err, store.ErrUserNotFound) {
 			responses.NotFoundResponse(w, err)
