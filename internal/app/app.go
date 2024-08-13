@@ -1,8 +1,8 @@
 package app
 
 import (
+	"fmt"
 	"log/slog"
-	"os"
 
 	"github.com/escoutdoor/social/internal/cache"
 	"github.com/escoutdoor/social/internal/config"
@@ -14,18 +14,16 @@ import (
 	"github.com/escoutdoor/social/pkg/validator"
 )
 
-func Run() {
+func Run() error {
 	logger.SetupLogger()
 	cfg, err := config.New()
 	if err != nil {
-		slog.Error("failed to initialize config", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("failed to initialize config: %w", err)
 	}
 
 	db, err := postgres.New(cfg.PostgresURL)
 	if err != nil {
-		slog.Error("failed to connect to postgres", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("failed to connect to postgres: %w", err)
 	}
 	defer db.Close()
 	slog.Info("successfully connected to postgres")
@@ -34,15 +32,13 @@ func Run() {
 
 	s3, err := s3.New(cfg)
 	if err != nil {
-		slog.Error("failed to connect to s3", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("failed to connect to s3: %w", err)
 	}
 	slog.Info("successfully connected to s3")
 
 	cache, err := cache.New(cfg)
 	if err != nil {
-		slog.Error("failed to connect to redis", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("failed to connect to redis: %w", err)
 	}
 	slog.Info("successfully connected to redis")
 
@@ -56,8 +52,8 @@ func Run() {
 		Validator: validator,
 	})
 	if err := s.ListenAndServe(); err != nil {
-		slog.Error("server encountered an error", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("server encountered an error: %w", err)
 	}
 	slog.Info("shutting down..")
+	return nil
 }
