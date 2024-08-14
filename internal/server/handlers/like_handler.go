@@ -4,7 +4,9 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"time"
 
+	"github.com/escoutdoor/social/internal/cache"
 	"github.com/escoutdoor/social/internal/postgres/store"
 	"github.com/escoutdoor/social/internal/server/responses"
 	"github.com/go-chi/chi/v5"
@@ -14,19 +16,20 @@ type LikeHandler struct {
 	store        store.LikeStorer
 	postStore    store.PostStorer
 	commentStore store.CommentStorer
+	cache        *cache.Cache
 }
 
-func NewLikeHandler(s store.LikeStorer, postStore store.PostStorer, commentStore store.CommentStorer) LikeHandler {
+func NewLikeHandler(s store.LikeStorer, ps store.PostStorer, cs store.CommentStorer, cache *cache.Cache) LikeHandler {
 	return LikeHandler{
 		store:        s,
-		postStore:    postStore,
-		commentStore: commentStore,
+		postStore:    ps,
+		commentStore: cs,
+		cache:        cache,
 	}
 }
 
 func (h *LikeHandler) Router() *chi.Mux {
 	r := chi.NewRouter()
-	// likes/posts/id
 	r.Route("/posts", func(r chi.Router) {
 		r.Post("/{id}", h.handleLikePost)
 		r.Delete("/{id}", h.handleRemoveLikeFromPost)
@@ -50,7 +53,8 @@ func (h *LikeHandler) handleLikePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err = h.postStore.GetByID(r.Context(), postID); err != nil {
+	p, err := h.postStore.GetByID(r.Context(), postID)
+	if err != nil {
 		if errors.Is(err, store.ErrPostNotFound) {
 			responses.NotFoundResponse(w, store.ErrPostNotFound)
 			return
@@ -76,6 +80,13 @@ func (h *LikeHandler) handleLikePost(w http.ResponseWriter, r *http.Request) {
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
+
+	p.Likes++
+	if err := h.cache.Set(r.Context(), generatePostKey(p.ID), p, time.Minute*1).Err(); err != nil {
+		slog.Error("LikeHandler.handleLikePost - Cache.Set", "error", err)
+		responses.InternalServerResponse(w, ErrInternalServer)
+		return
+	}
 	responses.JSON(w, http.StatusOK, envelope{"message": "you just liked the post"})
 }
 
@@ -91,7 +102,8 @@ func (h *LikeHandler) handleRemoveLikeFromPost(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	if _, err := h.postStore.GetByID(r.Context(), postID); err != nil {
+	p, err := h.postStore.GetByID(r.Context(), postID)
+	if err != nil {
 		if errors.Is(err, store.ErrPostNotFound) {
 			responses.NotFoundResponse(w, err)
 			return
@@ -107,6 +119,13 @@ func (h *LikeHandler) handleRemoveLikeFromPost(w http.ResponseWriter, r *http.Re
 			return
 		}
 		slog.Error("LikeHandler.handleRemoveLikeFromPost - LikeStore.RemoveLikeFromPost", "error", err)
+		responses.InternalServerResponse(w, ErrInternalServer)
+		return
+	}
+
+	p.Likes--
+	if err := h.cache.Set(r.Context(), generatePostKey(p.ID), p, time.Minute*1).Err(); err != nil {
+		slog.Error("LikeHandler.handleRemoveLikeFromPost - Cache.Set", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}

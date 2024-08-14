@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	"github.com/escoutdoor/social/internal/types"
 	"github.com/google/uuid"
@@ -21,7 +22,7 @@ func NewPostStore(db *sql.DB) *PostStore {
 func (s *PostStore) Create(ctx context.Context, userID uuid.UUID, input types.CreatePostReq) (*types.Post, error) {
 	stmt, err := s.db.PrepareContext(ctx, `
 		INSERT INTO POSTS(CONTENT, USER_ID, PHOTO_URL) VALUES($1, $2, $3)
-		RETURNING ID, CONTENT, USER_ID, PROTO_URL, CREATED_AT, UPDATED_AT
+		RETURNING ID, CONTENT, USER_ID, PHOTO_URL, CREATED_AT, UPDATED_AT
 	`)
 	if err != nil {
 		return nil, err
@@ -31,7 +32,11 @@ func (s *PostStore) Create(ctx context.Context, userID uuid.UUID, input types.Cr
 	if err != nil {
 		return nil, err
 	}
-	return scanPost(rows)
+
+	if rows.Next() {
+		return scanPost(rows)
+	}
+	return nil, ErrPostNotFound
 }
 
 func (s *PostStore) Update(ctx context.Context, postID uuid.UUID, input types.Post) (*types.Post, error) {
@@ -58,21 +63,40 @@ func (s *PostStore) Update(ctx context.Context, postID uuid.UUID, input types.Po
 
 func (s *PostStore) GetByID(ctx context.Context, id uuid.UUID) (*types.Post, error) {
 	stmt, err := s.db.PrepareContext(ctx, `
-		SELECT * FROM POSTS WHERE ID = $1
+		SELECT 
+			p.ID,
+			p.CONTENT,
+			p.USER_ID,
+			p.PHOTO_URL,
+			COUNT(l.ID) as LIKES,
+			p.UPDATED_AT,
+			p.CREATED_AT
+		FROM POSTS p 
+		LEFT JOIN POST_LIKES l ON p.ID = l.POST_ID
+		WHERE p.ID = $1
+		GROUP BY p.ID
 	`)
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := stmt.QueryContext(ctx, id)
+	var post types.Post
+	err = stmt.QueryRowContext(ctx, id).Scan(
+		&post.ID,
+		&post.Content,
+		&post.UserID,
+		&post.PhotoURL,
+		&post.Likes,
+		&post.CreatedAt,
+		&post.UpdatedAt,
+	)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrPostNotFound
+		}
 		return nil, err
 	}
-
-	if rows.Next() {
-		return scanPost(rows)
-	}
-	return nil, ErrPostNotFound
+	return &post, err
 }
 
 func (s *PostStore) GetAll(ctx context.Context) ([]types.Post, error) {

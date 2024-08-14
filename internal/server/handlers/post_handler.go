@@ -43,10 +43,6 @@ func (h *PostHandler) Router() *chi.Mux {
 	return r
 }
 
-func generateRDBPostKey(id uuid.UUID) string {
-	return fmt.Sprintf("post%s", id)
-}
-
 func (h *PostHandler) handleCreatePost(w http.ResponseWriter, r *http.Request) {
 	user, err := getUserFromCtx(r)
 	if err != nil {
@@ -71,8 +67,8 @@ func (h *PostHandler) handleCreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	key := generateRDBPostKey(post.ID)
-	if err := h.cache.Set(r.Context(), key, post, time.Minute*10).Err(); err != nil {
+	key := generatePostKey(post.ID)
+	if err := h.cache.Set(r.Context(), key, post, time.Minute*1).Err(); err != nil {
 		slog.Error("PostHandler.handleCreatePost - Rdb.Set", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return
@@ -92,9 +88,8 @@ func (h *PostHandler) handleUpdatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var p *types.Post
-	key := generateRDBPostKey(postID)
-	p, err = h.cache.GetPost(r.Context(), key)
+	key := generatePostKey(postID)
+	p, err := h.cache.GetPost(r.Context(), key)
 	if errors.Is(err, redis.Nil) {
 		p, err = h.store.GetByID(r.Context(), postID)
 		if err != nil {
@@ -140,7 +135,7 @@ func (h *PostHandler) handleUpdatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.cache.Set(r.Context(), key, post, time.Minute*10).Err(); err != nil {
+	if err := h.cache.Set(r.Context(), key, post, time.Minute*1).Err(); err != nil {
 		slog.Error("PostHandler.handleUpdatePost - Cache.Set", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return
@@ -155,9 +150,8 @@ func (h *PostHandler) handleGetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var post *types.Post
-	key := generateRDBPostKey(id)
-	post, err = h.cache.GetPost(r.Context(), key)
+	key := generatePostKey(id)
+	post, err := h.cache.GetPost(r.Context(), key)
 	if errors.Is(err, redis.Nil) {
 		post, err = h.store.GetByID(r.Context(), id)
 		if err != nil {
@@ -169,8 +163,7 @@ func (h *PostHandler) handleGetByID(w http.ResponseWriter, r *http.Request) {
 			responses.InternalServerResponse(w, ErrInternalServer)
 			return
 		}
-
-		if err := h.cache.Set(r.Context(), key, post, time.Minute*10).Err(); err != nil {
+		if err := h.cache.Set(r.Context(), key, post, time.Minute*1).Err(); err != nil {
 			slog.Error("PostHandler.handleGetByID - Cache.Set", "error", err)
 			responses.InternalServerResponse(w, ErrInternalServer)
 			return
@@ -186,7 +179,9 @@ func (h *PostHandler) handleGetByID(w http.ResponseWriter, r *http.Request) {
 
 func (h *PostHandler) handleGetAll(w http.ResponseWriter, r *http.Request) {
 	var posts types.Posts
-	posts, err := h.cache.GetPosts(r.Context(), "posts")
+	key := "posts"
+
+	posts, err := h.cache.GetPosts(r.Context(), key)
 	if errors.Is(err, redis.Nil) {
 		posts, err = h.store.GetAll(r.Context())
 		if err != nil {
@@ -194,7 +189,7 @@ func (h *PostHandler) handleGetAll(w http.ResponseWriter, r *http.Request) {
 			responses.InternalServerResponse(w, ErrInternalServer)
 			return
 		}
-		if err := h.cache.Set(r.Context(), "posts", posts, time.Minute*10).Err(); err != nil {
+		if err := h.cache.Set(r.Context(), key, posts, time.Minute*1).Err(); err != nil {
 			slog.Error("PostHandler.handleGetAll - Cache.Set", "error", err)
 			responses.InternalServerResponse(w, ErrInternalServer)
 			return
@@ -221,7 +216,7 @@ func (h *PostHandler) handleDeletePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var post *types.Post
-	key := generateRDBPostKey(postID)
+	key := generatePostKey(postID)
 	post, err = h.cache.GetPost(r.Context(), key)
 	if errors.Is(err, redis.Nil) {
 		post, err = h.store.GetByID(r.Context(), postID)
@@ -257,4 +252,8 @@ func (h *PostHandler) handleDeletePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	responses.JSON(w, http.StatusOK, envelope{"message": "post successfully deleted"})
+}
+
+func generatePostKey(id uuid.UUID) string {
+	return fmt.Sprintf("post%s", id)
 }

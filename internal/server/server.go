@@ -24,7 +24,7 @@ func New(opts Opts) *http.Server {
 	user := handlers.NewUserHandler(opts.Store.User, opts.Validator)
 	auth := handlers.NewAuthHandler(opts.Store.Auth, opts.Validator)
 	post := handlers.NewPostHandler(opts.Store.Post, opts.Cache, opts.Validator)
-	like := handlers.NewLikeHandler(opts.Store.Like, opts.Store.Post, opts.Store.Comment)
+	like := handlers.NewLikeHandler(opts.Store.Like, opts.Store.Post, opts.Store.Comment, opts.Cache)
 	comment := handlers.NewCommentHandler(opts.Store.Comment, opts.Store.Post, opts.Validator)
 	file := handlers.NewFileHandler(opts.S3Store)
 

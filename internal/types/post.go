@@ -12,6 +12,7 @@ type Post struct {
 	Content   string    `json:"content"`
 	UserID    uuid.UUID `json:"user_id"`
 	PhotoURL  *string   `json:"photo_url,omitempty"`
+	Likes     int       `json:"likes"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
