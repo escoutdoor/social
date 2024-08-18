@@ -5,6 +5,7 @@ import (
 )
 
 type Config struct {
+	Env         string `envconfig:"ENV" default:"local"`
 	Port        int    `envconfig:"PORT" default:"8080"`
 	PostgresURL string `envconfig:"POSTGRES_URL" required:"true"`
 	RedisURL    string `envconfig:"REDIS_URL" required:"true"`
