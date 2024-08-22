@@ -69,7 +69,7 @@ func (h *UserHandler) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.validator.Validate(input); err != nil {
-		responses.BadRequestResponse(w, err)
+		responses.FailedValidationError(w, err)
 		return
 	}
 	ctx := r.Context()

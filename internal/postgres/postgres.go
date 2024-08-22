@@ -14,7 +14,6 @@ func New(connStr string) (*sql.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("db connection error: %w", err)
 	}
-	defer conn.Close()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()

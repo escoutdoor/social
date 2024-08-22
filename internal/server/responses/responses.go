@@ -31,6 +31,10 @@ func BadRequestResponse(w http.ResponseWriter, err error) {
 	ErrorResponse(w, http.StatusBadRequest, err.Error())
 }
 
+func FailedValidationError(w http.ResponseWriter, errs map[string]string) {
+	JSON(w, http.StatusBadRequest, errs)
+}
+
 func UnauthorizedResponse(w http.ResponseWriter, err error) {
 	ErrorResponse(w, http.StatusUnauthorized, err.Error())
 }

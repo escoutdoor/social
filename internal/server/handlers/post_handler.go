@@ -56,7 +56,7 @@ func (h *PostHandler) handleCreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.validator.Validate(input); err != nil {
-		responses.BadRequestResponse(w, err)
+		responses.FailedValidationError(w, err)
 		return
 	}
 
@@ -120,7 +120,7 @@ func (h *PostHandler) handleUpdatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.validator.Validate(input); err != nil {
-		responses.BadRequestResponse(w, err)
+		responses.FailedValidationError(w, err)
 		return
 	}
 

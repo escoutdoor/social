@@ -65,7 +65,7 @@ func (h *CommentHandler) handleCreateComment(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	if err := h.validator.Validate(input); err != nil {
-		responses.BadRequestResponse(w, err)
+		responses.FailedValidationError(w, err)
 		return
 	}
 

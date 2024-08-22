@@ -30,15 +30,15 @@ func New() *Validator {
 	return &Validator{v: validate}
 }
 
-func (vl *Validator) Validate(b interface{}) error {
+func (vl *Validator) Validate(b interface{}) map[string]string {
 	err := vl.v.Struct(b)
 	if err != nil {
-		var errors []string
+		errors := make(map[string]string)
 		for _, item := range err.(validator.ValidationErrors) {
 			ve := vl.getValidationErr(item)
-			errors = append(errors, ve.Error())
+			errors[item.Field()] = ve.Error()
 		}
-		return fmt.Errorf(strings.Join(errors, ", "))
+		return errors
 	}
 
 	return nil

@@ -42,7 +42,7 @@ func (h *AuthHandler) handleSignUp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.validator.Validate(input); err != nil {
-		responses.BadRequestResponse(w, err)
+		responses.FailedValidationError(w, err)
 		return
 	}
 
@@ -78,7 +78,7 @@ func (h *AuthHandler) handleSignIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.validator.Validate(input); err != nil {
-		responses.BadRequestResponse(w, err)
+		responses.FailedValidationError(w, err)
 		return
 	}
 
