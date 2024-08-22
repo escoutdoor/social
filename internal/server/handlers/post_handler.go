@@ -37,7 +37,7 @@ func (h *PostHandler) Router() *chi.Mux {
 	r.Post("/", h.handleCreatePost)
 	r.Get("/", h.handleGetAll)
 	r.Get("/{id}", h.handleGetByID)
-	r.Put("/{id}", h.handleUpdatePost)
+	r.Patch("/{id}", h.handleUpdatePost)
 	r.Delete("/{id}", h.handleDeletePost)
 
 	return r

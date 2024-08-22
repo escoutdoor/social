@@ -28,7 +28,7 @@ func NewUserHandler(store store.UserStorer, v *validator.Validator) UserHandler 
 
 func (h *UserHandler) Router() *chi.Mux {
 	r := chi.NewRouter()
-	r.Put("/", h.handleUpdateUser)
+	r.Patch("/", h.handleUpdateUser)
 	r.Delete("/", h.handleDeleteUser)
 	r.Get("/{id}", h.handleGetByID)
 
