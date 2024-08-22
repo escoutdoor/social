@@ -13,7 +13,7 @@ import (
 )
 
 type Opts struct {
-	Config    config.Config
+	Config    *config.Config
 	Store     *store.Store
 	S3Store   *s3.MinIOClient
 	Cache     *cache.Cache

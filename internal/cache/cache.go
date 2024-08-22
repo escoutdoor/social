@@ -19,7 +19,7 @@ type Cache struct {
 	*redis.Client
 }
 
-func New(cfg config.Config) (*Cache, error) {
+func New(cfg *config.Config) (*Cache, error) {
 	opts, err := redis.ParseURL(cfg.RedisURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse redis url: %w", err)

@@ -48,7 +48,8 @@ func (h *CommentHandler) handleCreateComment(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if _, err := h.postStore.GetByID(r.Context(), postID); err != nil {
+	ctx := r.Context()
+	if _, err := h.postStore.GetByID(ctx, postID); err != nil {
 		if errors.Is(err, store.ErrPostNotFound) {
 			responses.NotFoundResponse(w, err)
 			return
@@ -69,7 +70,7 @@ func (h *CommentHandler) handleCreateComment(w http.ResponseWriter, r *http.Requ
 	}
 
 	if input.ParentCommentID != nil {
-		if _, err := h.store.GetByID(r.Context(), *input.ParentCommentID); err != nil {
+		if _, err := h.store.GetByID(ctx, *input.ParentCommentID); err != nil {
 			if errors.Is(err, store.ErrCommentNotFound) {
 				responses.NotFoundResponse(w, err)
 				return
@@ -79,7 +80,7 @@ func (h *CommentHandler) handleCreateComment(w http.ResponseWriter, r *http.Requ
 			return
 		}
 	}
-	id, err := h.store.Create(r.Context(), user.ID, postID, input)
+	id, err := h.store.Create(ctx, user.ID, postID, input)
 	if err != nil {
 		slog.Error("CommentHandler.handleCreateComment - CommentStore.Create", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
@@ -95,7 +96,8 @@ func (h *CommentHandler) handleGetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	comment, err := h.store.GetByID(r.Context(), id)
+	ctx := r.Context()
+	comment, err := h.store.GetByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, store.ErrCommentNotFound) {
 			responses.NotFoundResponse(w, store.ErrCommentNotFound)
@@ -115,7 +117,8 @@ func (h *CommentHandler) handleGetAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := h.postStore.GetByID(r.Context(), postID); err != nil {
+	ctx := r.Context()
+	if _, err := h.postStore.GetByID(ctx, postID); err != nil {
 		if errors.Is(err, store.ErrPostNotFound) {
 			responses.NotFoundResponse(w, err)
 			return
@@ -125,7 +128,7 @@ func (h *CommentHandler) handleGetAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	comments, err := h.store.GetAll(r.Context(), postID)
+	comments, err := h.store.GetAll(ctx, postID)
 	if err != nil {
 		slog.Error("CommentHandler.handleGetAll - CommentStore.GetAll", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
@@ -146,7 +149,8 @@ func (h *CommentHandler) handleDeleteComment(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	comment, err := h.store.GetByID(r.Context(), commentID)
+	ctx := r.Context()
+	comment, err := h.store.GetByID(ctx, commentID)
 	if err != nil {
 		if errors.Is(err, store.ErrCommentNotFound) {
 			responses.NotFoundResponse(w, err)
@@ -161,7 +165,7 @@ func (h *CommentHandler) handleDeleteComment(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err = h.store.Delete(r.Context(), commentID)
+	err = h.store.Delete(ctx, commentID)
 	if err != nil {
 		slog.Error("CommentHandler.handleDeleteComment - CommentStore.Delete", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)

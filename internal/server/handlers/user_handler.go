@@ -42,7 +42,8 @@ func (h *UserHandler) handleGetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.store.GetByID(r.Context(), id)
+	ctx := r.Context()
+	user, err := h.store.GetByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, store.ErrUserNotFound) {
 			responses.NotFoundResponse(w, err)
@@ -71,6 +72,7 @@ func (h *UserHandler) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		responses.BadRequestResponse(w, err)
 		return
 	}
+	ctx := r.Context()
 
 	if input.FirstName != nil {
 		user.FirstName = *input.FirstName
@@ -79,7 +81,7 @@ func (h *UserHandler) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		user.LastName = *input.LastName
 	}
 	if input.Email != nil {
-		ok, err := h.store.GetByEmail(r.Context(), *input.Email)
+		ok, err := h.store.GetByEmail(ctx, *input.Email)
 		switch {
 		case ok != nil:
 			responses.BadRequestResponse(w, store.ErrEmailAlreadyExists)
@@ -114,7 +116,7 @@ func (h *UserHandler) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		user.AvatarURL = input.AvatarURL
 	}
 
-	uu, err := h.store.Update(r.Context(), user.ID, *user)
+	uu, err := h.store.Update(ctx, user.ID, *user)
 	if err != nil {
 		slog.Error("UserHandler.handleUpdateUser - UserStore.Update", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
@@ -130,7 +132,8 @@ func (h *UserHandler) handleDeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.store.Delete(r.Context(), user.ID)
+	ctx := r.Context()
+	err = h.store.Delete(ctx, user.ID)
 	if err != nil {
 		if errors.Is(err, store.ErrUserNotFound) {
 			responses.NotFoundResponse(w, err)

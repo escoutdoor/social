@@ -20,10 +20,10 @@ type Config struct {
 	MinIORegion     string `envconfig:"MINIO_REGION" default:"auto"`
 }
 
-func New() (Config, error) {
+func New() (*Config, error) {
 	cfg := Config{}
 	if err := envconfig.Process("", &cfg); err != nil {
-		return cfg, err
+		return &cfg, err
 	}
-	return cfg, nil
+	return &cfg, nil
 }

@@ -46,7 +46,8 @@ func (h *AuthHandler) handleSignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.store.SignUp(r.Context(), input)
+	ctx := r.Context()
+	id, err := h.store.SignUp(ctx, input)
 	if err != nil {
 		if errors.Is(err, store.ErrUserAlreadyExists) {
 			responses.BadRequestResponse(w, err)
@@ -57,7 +58,7 @@ func (h *AuthHandler) handleSignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := h.store.GenerateToken(r.Context(), id)
+	token, err := h.store.GenerateToken(ctx, id)
 	if err != nil {
 		slog.Error("AuthHandler.handleSignUp - AuthStore.GenerateToken", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
@@ -81,7 +82,8 @@ func (h *AuthHandler) handleSignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.store.SignIn(r.Context(), input)
+	ctx := r.Context()
+	user, err := h.store.SignIn(ctx, input)
 	if err != nil {
 		if errors.Is(err, store.ErrInvalidEmailOrPw) {
 			responses.BadRequestResponse(w, err)
@@ -92,7 +94,7 @@ func (h *AuthHandler) handleSignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := h.store.GenerateToken(r.Context(), user.ID)
+	token, err := h.store.GenerateToken(ctx, user.ID)
 	if err != nil {
 		slog.Error("AuthHandler.handleSignIn - AuthStore.GenerateToken", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)

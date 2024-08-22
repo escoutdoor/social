@@ -55,7 +55,7 @@ type CommentStorer interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
-func NewStore(db *sql.DB, cfg config.Config) *Store {
+func NewStore(db *sql.DB, cfg *config.Config) *Store {
 	return &Store{
 		Auth:    NewAuthStore(db, cfg.JWTKey),
 		User:    NewUserStore(db),

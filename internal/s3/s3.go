@@ -11,10 +11,10 @@ import (
 
 type MinIOClient struct {
 	mc  *minio.Client
-	cfg config.Config
+	cfg *config.Config
 }
 
-func New(cfg config.Config) (*MinIOClient, error) {
+func New(cfg *config.Config) (*MinIOClient, error) {
 	ctx := context.Background()
 	client, err := minio.New(cfg.MinIOHost, &minio.Options{
 		Creds:  credentials.NewStaticV4(cfg.MinIOUser, cfg.MinIOPw, ""),

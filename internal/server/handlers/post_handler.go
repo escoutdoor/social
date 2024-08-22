@@ -60,7 +60,8 @@ func (h *PostHandler) handleCreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	post, err := h.store.Create(r.Context(), user.ID, input)
+	ctx := r.Context()
+	post, err := h.store.Create(ctx, user.ID, input)
 	if err != nil {
 		slog.Error("PostHandler.handleCreatePost - PostStore.Create", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
@@ -68,7 +69,7 @@ func (h *PostHandler) handleCreatePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	key := generatePostKey(post.ID)
-	if err := h.cache.Set(r.Context(), key, post, time.Minute*1).Err(); err != nil {
+	if err := h.cache.Set(ctx, key, post, time.Minute*1).Err(); err != nil {
 		slog.Error("PostHandler.handleCreatePost - Rdb.Set", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return
@@ -88,10 +89,11 @@ func (h *PostHandler) handleUpdatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ctx := r.Context()
 	key := generatePostKey(postID)
-	p, err := h.cache.GetPost(r.Context(), key)
+	p, err := h.cache.GetPost(ctx, key)
 	if errors.Is(err, redis.Nil) {
-		p, err = h.store.GetByID(r.Context(), postID)
+		p, err = h.store.GetByID(ctx, postID)
 		if err != nil {
 			if errors.Is(err, store.ErrPostNotFound) {
 				responses.NotFoundResponse(w, err)
@@ -128,14 +130,14 @@ func (h *PostHandler) handleUpdatePost(w http.ResponseWriter, r *http.Request) {
 	if input.PhotoURL != nil {
 		p.PhotoURL = input.PhotoURL
 	}
-	post, err := h.store.Update(r.Context(), postID, *p)
+	post, err := h.store.Update(ctx, postID, *p)
 	if err != nil {
 		slog.Error("PostHandler.handleUpdatePost - PostStore.Update", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 
-	if err := h.cache.Set(r.Context(), key, post, time.Minute*1).Err(); err != nil {
+	if err := h.cache.Set(ctx, key, post, time.Minute*1).Err(); err != nil {
 		slog.Error("PostHandler.handleUpdatePost - Cache.Set", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return
@@ -150,10 +152,11 @@ func (h *PostHandler) handleGetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ctx := r.Context()
 	key := generatePostKey(id)
-	post, err := h.cache.GetPost(r.Context(), key)
+	post, err := h.cache.GetPost(ctx, key)
 	if errors.Is(err, redis.Nil) {
-		post, err = h.store.GetByID(r.Context(), id)
+		post, err = h.store.GetByID(ctx, id)
 		if err != nil {
 			if errors.Is(err, store.ErrPostNotFound) {
 				responses.NotFoundResponse(w, store.ErrPostNotFound)
@@ -163,7 +166,7 @@ func (h *PostHandler) handleGetByID(w http.ResponseWriter, r *http.Request) {
 			responses.InternalServerResponse(w, ErrInternalServer)
 			return
 		}
-		if err := h.cache.Set(r.Context(), key, post, time.Minute*1).Err(); err != nil {
+		if err := h.cache.Set(ctx, key, post, time.Minute*1).Err(); err != nil {
 			slog.Error("PostHandler.handleGetByID - Cache.Set", "error", err)
 			responses.InternalServerResponse(w, ErrInternalServer)
 			return
@@ -181,15 +184,16 @@ func (h *PostHandler) handleGetAll(w http.ResponseWriter, r *http.Request) {
 	var posts types.Posts
 	key := "posts"
 
-	posts, err := h.cache.GetPosts(r.Context(), key)
+	ctx := r.Context()
+	posts, err := h.cache.GetPosts(ctx, key)
 	if errors.Is(err, redis.Nil) {
-		posts, err = h.store.GetAll(r.Context())
+		posts, err = h.store.GetAll(ctx)
 		if err != nil {
 			slog.Error("PostHandler.handleGetAll - PostStore.GetAll", "error", err)
 			responses.InternalServerResponse(w, ErrInternalServer)
 			return
 		}
-		if err := h.cache.Set(r.Context(), key, posts, time.Minute*1).Err(); err != nil {
+		if err := h.cache.Set(ctx, key, posts, time.Minute*1).Err(); err != nil {
 			slog.Error("PostHandler.handleGetAll - Cache.Set", "error", err)
 			responses.InternalServerResponse(w, ErrInternalServer)
 			return
@@ -215,11 +219,12 @@ func (h *PostHandler) handleDeletePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ctx := r.Context()
 	var post *types.Post
 	key := generatePostKey(postID)
-	post, err = h.cache.GetPost(r.Context(), key)
+	post, err = h.cache.GetPost(ctx, key)
 	if errors.Is(err, redis.Nil) {
-		post, err = h.store.GetByID(r.Context(), postID)
+		post, err = h.store.GetByID(ctx, postID)
 		if err != nil {
 			if errors.Is(err, store.ErrPostNotFound) {
 				responses.NotFoundResponse(w, store.ErrPostNotFound)
@@ -240,13 +245,13 @@ func (h *PostHandler) handleDeletePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.store.Delete(r.Context(), postID)
+	err = h.store.Delete(ctx, postID)
 	if err != nil {
 		slog.Error("PostHandler.handleDeletePost - PostStore.Delete", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
-	if err := h.cache.Del(r.Context(), key).Err(); err != nil {
+	if err := h.cache.Del(ctx, key).Err(); err != nil {
 		slog.Error("PostHandler.handleDeletePost - Cache.Del", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return

@@ -53,7 +53,8 @@ func (h *LikeHandler) handleLikePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p, err := h.postStore.GetByID(r.Context(), postID)
+	ctx := r.Context()
+	p, err := h.postStore.GetByID(ctx, postID)
 	if err != nil {
 		if errors.Is(err, store.ErrPostNotFound) {
 			responses.NotFoundResponse(w, store.ErrPostNotFound)
@@ -64,7 +65,7 @@ func (h *LikeHandler) handleLikePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	isLiked, err := h.store.IsPostLiked(r.Context(), postID)
+	isLiked, err := h.store.IsPostLiked(ctx, postID)
 	if err != nil {
 		slog.Error("LikeHandler.handleLikePost - LikeStore.IsPostLiked", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
@@ -75,14 +76,14 @@ func (h *LikeHandler) handleLikePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.store.LikePost(r.Context(), postID, user.ID); err != nil {
+	if err := h.store.LikePost(ctx, postID, user.ID); err != nil {
 		slog.Error("LikeHandler.handleLikePost - LikeStore.LikePost", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
 
 	p.Likes++
-	if err := h.cache.Set(r.Context(), generatePostKey(p.ID), p, time.Minute*1).Err(); err != nil {
+	if err := h.cache.Set(ctx, generatePostKey(p.ID), p, time.Minute*1).Err(); err != nil {
 		slog.Error("LikeHandler.handleLikePost - Cache.Set", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return
@@ -102,7 +103,8 @@ func (h *LikeHandler) handleRemoveLikeFromPost(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	p, err := h.postStore.GetByID(r.Context(), postID)
+	ctx := r.Context()
+	p, err := h.postStore.GetByID(ctx, postID)
 	if err != nil {
 		if errors.Is(err, store.ErrPostNotFound) {
 			responses.NotFoundResponse(w, err)
@@ -113,7 +115,7 @@ func (h *LikeHandler) handleRemoveLikeFromPost(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	if err := h.store.RemoveLikeFromPost(r.Context(), postID, user.ID); err != nil {
+	if err := h.store.RemoveLikeFromPost(ctx, postID, user.ID); err != nil {
 		if errors.Is(err, store.ErrRemoveLikeFailed) {
 			responses.BadRequestResponse(w, err)
 			return
@@ -124,7 +126,7 @@ func (h *LikeHandler) handleRemoveLikeFromPost(w http.ResponseWriter, r *http.Re
 	}
 
 	p.Likes--
-	if err := h.cache.Set(r.Context(), generatePostKey(p.ID), p, time.Minute*1).Err(); err != nil {
+	if err := h.cache.Set(ctx, generatePostKey(p.ID), p, time.Minute*1).Err(); err != nil {
 		slog.Error("LikeHandler.handleRemoveLikeFromPost - Cache.Set", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return
@@ -144,7 +146,8 @@ func (h *LikeHandler) handleLikeComment(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if _, err = h.commentStore.GetByID(r.Context(), commentID); err != nil {
+	ctx := r.Context()
+	if _, err = h.commentStore.GetByID(ctx, commentID); err != nil {
 		if errors.Is(err, store.ErrCommentNotFound) {
 			responses.NotFoundResponse(w, err)
 			return
@@ -154,7 +157,7 @@ func (h *LikeHandler) handleLikeComment(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	isLiked, err := h.store.IsCommentLiked(r.Context(), commentID)
+	isLiked, err := h.store.IsCommentLiked(ctx, commentID)
 	if err != nil {
 		slog.Error("LikeHandler.handleLikeComment - LikeStore.IsCommentLiked", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
@@ -165,7 +168,7 @@ func (h *LikeHandler) handleLikeComment(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if err := h.store.LikeComment(r.Context(), commentID, user.ID); err != nil {
+	if err := h.store.LikeComment(ctx, commentID, user.ID); err != nil {
 		slog.Error("LikeHandler.handleLikeComment - LikeStore.LikeComment", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return
@@ -185,7 +188,8 @@ func (h *LikeHandler) handleRemoveLikeFromComment(w http.ResponseWriter, r *http
 		return
 	}
 
-	if _, err := h.commentStore.GetByID(r.Context(), commentID); err != nil {
+	ctx := r.Context()
+	if _, err := h.commentStore.GetByID(ctx, commentID); err != nil {
 		if errors.Is(err, store.ErrCommentNotFound) {
 			responses.NotFoundResponse(w, err)
 			return
@@ -195,7 +199,7 @@ func (h *LikeHandler) handleRemoveLikeFromComment(w http.ResponseWriter, r *http
 		return
 	}
 
-	if err := h.store.RemoveLikeFromComment(r.Context(), commentID, user.ID); err != nil {
+	if err := h.store.RemoveLikeFromComment(ctx, commentID, user.ID); err != nil {
 		if errors.Is(err, store.ErrRemoveLikeFailed) {
 			responses.BadRequestResponse(w, err)
 			return
