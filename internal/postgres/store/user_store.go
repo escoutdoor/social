@@ -72,7 +72,7 @@ func (s *UserStore) Update(ctx context.Context, id uuid.UUID, input types.User) 
 		return nil, err
 	}
 
-	_, err = stmt.ExecContext(ctx,
+	args := []interface{}{
 		input.FirstName,
 		input.LastName,
 		input.Email,
@@ -81,7 +81,8 @@ func (s *UserStore) Update(ctx context.Context, id uuid.UUID, input types.User) 
 		input.Bio,
 		input.AvatarURL,
 		id,
-	)
+	}
+	_, err = stmt.ExecContext(ctx, args...)
 	if err != nil {
 		return nil, err
 	}

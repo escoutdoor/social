@@ -28,7 +28,8 @@ func (s *PostStore) Create(ctx context.Context, userID uuid.UUID, input types.Cr
 		return nil, err
 	}
 
-	rows, err := stmt.QueryContext(ctx, input.Content, userID, input.PhotoURL)
+	args := []interface{}{input.Content, userID, input.PhotoURL}
+	rows, err := stmt.QueryContext(ctx, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -50,12 +51,8 @@ func (s *PostStore) Update(ctx context.Context, postID uuid.UUID, input types.Po
 		return nil, err
 	}
 
-	if _, err = stmt.ExecContext(
-		ctx,
-		input.Content,
-		input.PhotoURL,
-		postID,
-	); err != nil {
+	args := []interface{}{input.Content, input.PhotoURL, postID}
+	if _, err = stmt.ExecContext(ctx, args...); err != nil {
 		return nil, err
 	}
 	return s.GetByID(ctx, postID)

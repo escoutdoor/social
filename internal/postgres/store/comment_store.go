@@ -55,7 +55,6 @@ func (s *CommentStore) GetByID(ctx context.Context, id uuid.UUID) (*types.Commen
 }
 
 func (s *CommentStore) GetAll(ctx context.Context, postID uuid.UUID) ([]types.Comment, error) {
-	var comments []types.Comment
 	stmt, err := s.db.PrepareContext(ctx, `
 		WITH RECURSIVE comments_cte AS (
 			SELECT 
@@ -103,6 +102,9 @@ func (s *CommentStore) GetAll(ctx context.Context, postID uuid.UUID) ([]types.Co
 	}
 	defer rows.Close()
 
+	var comments []types.Comment
+	commentMap := make(map[uuid.UUID]*types.Comment)
+
 	for rows.Next() {
 		var (
 			c     types.Comment
@@ -125,21 +127,16 @@ func (s *CommentStore) GetAll(ctx context.Context, postID uuid.UUID) ([]types.Co
 		if pcid.Valid {
 			c.ParentCommentID = &pcid.UUID
 		}
-		comments = append(comments, c)
-	}
 
-	commentMap := make(map[uuid.UUID]types.Comment)
-	var root []types.Comment
-	for _, item := range comments {
-		commentMap[item.ID] = item
-		if item.ParentCommentID != nil {
-			parent := commentMap[*item.ParentCommentID]
-			parent.Replies = append(parent.Replies, item)
-			continue
+		commentMap[c.ID] = &c
+		if c.ParentCommentID != nil {
+			parent := commentMap[*c.ParentCommentID]
+			parent.Replies = append(parent.Replies, c)
+		} else {
+			comments = append(comments, c)
 		}
-		root = append(root, item)
 	}
-	return root, nil
+	return comments, nil
 }
 
 func (s *CommentStore) Delete(ctx context.Context, id uuid.UUID) error {

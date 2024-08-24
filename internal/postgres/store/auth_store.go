@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log/slog"
 	"time"
 
 	"github.com/escoutdoor/social/internal/types"
@@ -47,17 +46,12 @@ func (s *AuthStore) SignUp(ctx context.Context, input types.CreateUserReq) (uuid
 
 	input.Password, err = hasher.HashPw(input.Password)
 	if err != nil {
-		slog.Error("hasher.HashPw", "error", err)
-		return uuid.Nil, err
+		return uuid.Nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
+	args := []interface{}{input.FirstName, input.LastName, input.Email, input.Password}
 	var id uuid.UUID
-	err = stmt.QueryRowContext(ctx,
-		input.FirstName,
-		input.LastName,
-		input.Email,
-		input.Password,
-	).Scan(&id)
+	err = stmt.QueryRowContext(ctx, args...).Scan(&id)
 	if err != nil {
 		return uuid.Nil, err
 	}
