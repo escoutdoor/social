@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/escoutdoor/social/internal/config"
 	"github.com/escoutdoor/social/internal/types"
@@ -17,6 +18,14 @@ var (
 
 type Cache struct {
 	*redis.Client
+}
+
+type Store interface {
+	GetPost(ctx context.Context, key string) (*types.Post, error)
+	GetPosts(ctx context.Context, key string) ([]types.Post, error)
+
+	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
+	Del(ctx context.Context, keys ...string) *redis.IntCmd
 }
 
 func New(cfg *config.Config) (*Cache, error) {

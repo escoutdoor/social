@@ -52,8 +52,8 @@ type File interface {
 
 type Opts struct {
 	Store     *store.Store
-	Cache     *cache.Cache
-	S3        *s3.MinIOClient
+	Cache     cache.Store
+	S3        s3.Store
 	Validator *validator.Validator
 
 	SignKey string

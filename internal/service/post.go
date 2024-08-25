@@ -15,10 +15,10 @@ import (
 
 type PostService struct {
 	store store.PostStorer
-	cache *cache.Cache
+	cache cache.Store
 }
 
-func NewPostService(store store.PostStorer, cache *cache.Cache) *PostService {
+func NewPostService(store store.PostStorer, cache cache.Store) *PostService {
 	return &PostService{
 		store: store,
 		cache: cache,

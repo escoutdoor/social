@@ -9,10 +9,10 @@ import (
 )
 
 type FileService struct {
-	s3 *s3.MinIOClient
+	s3 s3.Store
 }
 
-func NewFileService(s3 *s3.MinIOClient) *FileService {
+func NewFileService(s3 s3.Store) *FileService {
 	return &FileService{
 		s3: s3,
 	}

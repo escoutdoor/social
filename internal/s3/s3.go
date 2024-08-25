@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/escoutdoor/social/internal/config"
+	"github.com/escoutdoor/social/internal/types"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
@@ -12,6 +13,12 @@ import (
 type MinIOClient struct {
 	mc  *minio.Client
 	cfg *config.Config
+}
+
+type Store interface {
+	Create(file types.File) (string, error)
+	Delete(id string) error
+	GetByID(id string) (string, error)
 }
 
 func New(cfg *config.Config) (*MinIOClient, error) {

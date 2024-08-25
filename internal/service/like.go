@@ -14,10 +14,10 @@ import (
 
 type LikeService struct {
 	store store.LikeStorer
-	cache *cache.Cache
+	cache cache.Store
 }
 
-func NewLikeService(store store.LikeStorer, cache *cache.Cache) *LikeService {
+func NewLikeService(store store.LikeStorer, cache cache.Store) *LikeService {
 	return &LikeService{
 		store: store,
 		cache: cache,
