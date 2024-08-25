@@ -3,8 +3,10 @@ package store
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 type LikeStore struct {
@@ -22,6 +24,10 @@ func (s *LikeStore) LikePost(ctx context.Context, postID uuid.UUID, userID uuid.
 		INSERT INTO POST_LIKES(POST_ID, USER_ID) VALUES ($1, $2)
 	`)
 	if err != nil {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+			return ErrPostNotFound
+		}
 		return err
 	}
 	res, err := stmt.ExecContext(ctx, postID, userID)
@@ -68,6 +74,10 @@ func (s *LikeStore) LikeComment(ctx context.Context, commentID uuid.UUID, userID
 		INSERT INTO COMMENT_LIKES(COMMENT_ID, USER_ID) VALUES ($1, $2)
 	`)
 	if err != nil {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+			return ErrCommentNotFound
+		}
 		return err
 	}
 	res, err := stmt.ExecContext(ctx, commentID, userID)

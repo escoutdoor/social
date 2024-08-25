@@ -7,21 +7,22 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/escoutdoor/social/internal/httpserver/responses"
 	"github.com/escoutdoor/social/internal/postgres/store"
-	"github.com/escoutdoor/social/internal/server/responses"
+	"github.com/escoutdoor/social/internal/service"
 )
 
 const UserCtxKey string = "user"
 
 type AuthMiddleware struct {
-	authStore store.AuthStorer
-	userStore store.UserStorer
+	authSvc service.Auth
+	userSvc service.User
 }
 
-func NewAuthMiddleware(authStore store.AuthStorer, userStore store.UserStorer) *AuthMiddleware {
+func NewAuthMiddleware(authSvc service.Auth, userSvc service.User) *AuthMiddleware {
 	return &AuthMiddleware{
-		authStore: authStore,
-		userStore: userStore,
+		authSvc: authSvc,
+		userSvc: userSvc,
 	}
 }
 
@@ -34,14 +35,14 @@ func (m *AuthMiddleware) Auth(next http.Handler) http.Handler {
 			return
 		}
 		jwtToken = jwtToken[len("Bearer "):]
-		id, err := m.authStore.ParseToken(jwtToken)
+		id, err := m.authSvc.ParseToken(jwtToken)
 		if err != nil {
 			slog.Error("AuthMiddleware: failed to parse token", "error", err.Error())
 			responses.UnauthorizedResponse(w, fmt.Errorf("failed to parse token: %w", err))
 			return
 		}
 
-		user, err := m.userStore.GetByID(r.Context(), id)
+		user, err := m.userSvc.GetByID(r.Context(), id)
 		if err != nil {
 			if errors.Is(err, store.ErrUserNotFound) {
 				responses.UnauthorizedResponse(w, err)

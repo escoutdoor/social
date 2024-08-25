@@ -3,9 +3,12 @@ package store
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"time"
 
 	"github.com/escoutdoor/social/internal/types"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 type UserStore struct {
@@ -56,7 +59,7 @@ func (s *UserStore) GetByEmail(ctx context.Context, email string) (*types.User, 
 	return nil, ErrUserNotFound
 }
 
-func (s *UserStore) Update(ctx context.Context, id uuid.UUID, input types.User) (*types.User, error) {
+func (s *UserStore) Update(ctx context.Context, input types.User) (*types.User, error) {
 	stmt, err := s.db.PrepareContext(ctx, `
 		UPDATE USERS SET
 			FIRST_NAME = $1,
@@ -69,6 +72,10 @@ func (s *UserStore) Update(ctx context.Context, id uuid.UUID, input types.User) 
 		WHERE ID = $8
 	`)
 	if err != nil {
+		var errPq *pq.Error
+		if errors.As(err, &errPq) && errPq.Code == "23505" {
+			return nil, ErrEmailAlreadyExists
+		}
 		return nil, err
 	}
 
@@ -77,16 +84,16 @@ func (s *UserStore) Update(ctx context.Context, id uuid.UUID, input types.User) 
 		input.LastName,
 		input.Email,
 		input.Password,
-		input.DOB,
+		time.Time(*input.DOB),
 		input.Bio,
 		input.AvatarURL,
-		id,
+		input.ID,
 	}
 	_, err = stmt.ExecContext(ctx, args...)
 	if err != nil {
 		return nil, err
 	}
-	return s.GetByID(ctx, id)
+	return s.GetByID(ctx, input.ID)
 }
 
 func (s *UserStore) Delete(ctx context.Context, id uuid.UUID) error {

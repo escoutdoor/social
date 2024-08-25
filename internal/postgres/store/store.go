@@ -18,16 +18,13 @@ type Store struct {
 }
 
 type AuthStorer interface {
-	SignUp(ctx context.Context, input types.CreateUserReq) (uuid.UUID, error)
-	SignIn(ctx context.Context, input types.LoginReq) (*types.User, error)
-	GenerateToken(ctx context.Context, userID uuid.UUID) (string, error)
-	ParseToken(jwtToken string) (uuid.UUID, error)
+	Create(ctx context.Context, input types.CreateUserReq) (uuid.UUID, error)
 }
 
 type UserStorer interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*types.User, error)
 	GetByEmail(ctx context.Context, email string) (*types.User, error)
-	Update(ctx context.Context, id uuid.UUID, input types.User) (*types.User, error)
+	Update(ctx context.Context, input types.User) (*types.User, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
@@ -57,7 +54,7 @@ type CommentStorer interface {
 
 func NewStore(db *sql.DB, cfg *config.Config) *Store {
 	return &Store{
-		Auth:    NewAuthStore(db, cfg.JWTKey),
+		Auth:    NewAuthStore(db, cfg.SignKey),
 		User:    NewUserStore(db),
 		Post:    NewPostStore(db),
 		Like:    NewLikeStore(db),

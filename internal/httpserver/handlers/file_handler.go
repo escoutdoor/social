@@ -4,19 +4,18 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/escoutdoor/social/internal/s3"
-	"github.com/escoutdoor/social/internal/server/responses"
-	"github.com/escoutdoor/social/internal/types"
+	"github.com/escoutdoor/social/internal/httpserver/responses"
+	"github.com/escoutdoor/social/internal/service"
 	"github.com/go-chi/chi/v5"
 )
 
 type FileHandler struct {
-	minio *s3.MinIOClient
+	svc service.File
 }
 
-func NewFileHandler(m *s3.MinIOClient) FileHandler {
+func NewFileHandler(svc service.File) FileHandler {
 	return FileHandler{
-		minio: m,
+		svc: svc,
 	}
 }
 
@@ -33,13 +32,9 @@ func (h *FileHandler) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer src.Close()
-	f := types.File{
-		Name:    hdr.Filename,
-		Payload: src,
-		Size:    hdr.Size,
-	}
 
-	url, err := h.minio.Create(f)
+	ctx := r.Context()
+	url, err := h.svc.Create(ctx, src, hdr)
 	if err != nil {
 		slog.Error("FileHandler.Create - MinIOClient.Create", "error", err)
 		responses.InternalServerResponse(w, ErrFileSaveFailed)

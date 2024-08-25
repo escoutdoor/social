@@ -6,23 +6,22 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/escoutdoor/social/internal/httpserver/responses"
 	"github.com/escoutdoor/social/internal/postgres/store"
-	"github.com/escoutdoor/social/internal/server/responses"
+	"github.com/escoutdoor/social/internal/service"
 	"github.com/escoutdoor/social/internal/types"
 	"github.com/escoutdoor/social/pkg/validator"
 	"github.com/go-chi/chi/v5"
 )
 
 type CommentHandler struct {
-	store     store.CommentStorer
-	postStore store.PostStorer
+	svc       service.Comment
 	validator *validator.Validator
 }
 
-func NewCommentHandler(s store.CommentStorer, ps store.PostStorer, v *validator.Validator) CommentHandler {
+func NewCommentHandler(svc service.Comment, v *validator.Validator) CommentHandler {
 	return CommentHandler{
-		store:     s,
-		postStore: ps,
+		svc:       svc,
 		validator: v,
 	}
 }
@@ -48,17 +47,6 @@ func (h *CommentHandler) handleCreateComment(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	ctx := r.Context()
-	if _, err := h.postStore.GetByID(ctx, postID); err != nil {
-		if errors.Is(err, store.ErrPostNotFound) {
-			responses.NotFoundResponse(w, err)
-			return
-		}
-		slog.Error("CommentHandler.handleCreateComment - PostStore.GetByID", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServer)
-		return
-	}
-
 	var input types.CreateCommentReq
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		responses.BadRequestResponse(w, ErrInvalidRequestBody)
@@ -69,22 +57,21 @@ func (h *CommentHandler) handleCreateComment(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if input.ParentCommentID != nil {
-		if _, err := h.store.GetByID(ctx, *input.ParentCommentID); err != nil {
-			if errors.Is(err, store.ErrCommentNotFound) {
-				responses.NotFoundResponse(w, err)
-				return
-			}
-			slog.Error("CommentHandler.handleCreateComment - CommentStore.GetByID", "error", err)
+	ctx := r.Context()
+	id, err := h.svc.Create(ctx, user.ID, postID, input)
+	if err != nil {
+		switch {
+		case errors.Is(err, store.ErrPostNotFound):
+			responses.NotFoundResponse(w, err)
+			return
+		case errors.Is(err, store.ErrCommentNotFound):
+			responses.NotFoundResponse(w, err)
+			return
+		default:
+			slog.Error("CommentHandler.handleCreateComment - CommentService.Create", "error", err)
 			responses.InternalServerResponse(w, ErrInternalServer)
 			return
 		}
-	}
-	id, err := h.store.Create(ctx, user.ID, postID, input)
-	if err != nil {
-		slog.Error("CommentHandler.handleCreateComment - CommentStore.Create", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServer)
-		return
 	}
 	responses.JSON(w, http.StatusCreated, envelope{"id": id})
 }
@@ -97,13 +84,13 @@ func (h *CommentHandler) handleGetByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	comment, err := h.store.GetByID(ctx, id)
+	comment, err := h.svc.GetByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, store.ErrCommentNotFound) {
 			responses.NotFoundResponse(w, store.ErrCommentNotFound)
 			return
 		}
-		slog.Error("CommentHandler.handleGetByID - CommentStore.GetByID", "error", err)
+		slog.Error("CommentHandler.handleGetByID - CommentService.GetByID", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
@@ -118,19 +105,13 @@ func (h *CommentHandler) handleGetAll(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	if _, err := h.postStore.GetByID(ctx, postID); err != nil {
+	comments, err := h.svc.GetAll(ctx, postID)
+	if err != nil {
 		if errors.Is(err, store.ErrPostNotFound) {
 			responses.NotFoundResponse(w, err)
 			return
 		}
-		slog.Error("CommentHandler.handleGetAll - PostStore.GetByID", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServer)
-		return
-	}
-
-	comments, err := h.store.GetAll(ctx, postID)
-	if err != nil {
-		slog.Error("CommentHandler.handleGetAll - CommentStore.GetAll", "error", err)
+		slog.Error("CommentHandler.handleGetAll - CommentService.GetAll", "error", err)
 		responses.InternalServerResponse(w, ErrInternalServer)
 		return
 	}
@@ -150,26 +131,20 @@ func (h *CommentHandler) handleDeleteComment(w http.ResponseWriter, r *http.Requ
 	}
 
 	ctx := r.Context()
-	comment, err := h.store.GetByID(ctx, commentID)
+	err = h.svc.Delete(ctx, commentID, user.ID)
 	if err != nil {
-		if errors.Is(err, store.ErrCommentNotFound) {
+		switch {
+		case errors.Is(err, service.ErrAccessDenied):
+			responses.ForbiddenResponse(w, err)
+			return
+		case errors.Is(err, store.ErrCommentNotFound):
 			responses.NotFoundResponse(w, err)
 			return
+		default:
+			slog.Error("CommentHandler.handleDeleteComment - CommentService.Delete", "error", err)
+			responses.InternalServerResponse(w, ErrInternalServer)
+			return
 		}
-		slog.Error("CommentHandler.handleDeleteComment - CommentStore.GetByID", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServer)
-		return
-	}
-	if comment.UserID != user.ID {
-		responses.ForbiddenResponse(w, ErrAccessDenied)
-		return
-	}
-
-	err = h.store.Delete(ctx, commentID)
-	if err != nil {
-		slog.Error("CommentHandler.handleDeleteComment - CommentStore.Delete", "error", err)
-		responses.InternalServerResponse(w, ErrInternalServer)
-		return
 	}
 	responses.JSON(w, http.StatusOK, envelope{"message": "comment successfully deleted"})
 }

@@ -6,10 +6,11 @@ import (
 
 	"github.com/escoutdoor/social/internal/cache"
 	"github.com/escoutdoor/social/internal/config"
+	"github.com/escoutdoor/social/internal/httpserver"
 	"github.com/escoutdoor/social/internal/postgres"
 	"github.com/escoutdoor/social/internal/postgres/store"
 	"github.com/escoutdoor/social/internal/s3"
-	"github.com/escoutdoor/social/internal/server"
+	"github.com/escoutdoor/social/internal/service"
 	"github.com/escoutdoor/social/pkg/logger"
 	"github.com/escoutdoor/social/pkg/validator"
 )
@@ -43,12 +44,19 @@ func Run() error {
 	slog.Info("successfully connected to redis")
 
 	validator := validator.New()
-	slog.Info("server is running", slog.Int("port", cfg.Port))
-	s := server.New(server.Opts{
-		Config:    cfg,
+
+	services := service.NewServices(service.Opts{
 		Store:     store,
-		S3Store:   s3,
 		Cache:     cache,
+		S3:        s3,
+		Validator: validator,
+		SignKey:   cfg.SignKey,
+	})
+
+	slog.Info("server is running", slog.Int("port", cfg.Port))
+	s := httpserver.New(httpserver.Opts{
+		Config:    cfg,
+		Services:  services,
 		Validator: validator,
 	})
 	if err := s.ListenAndServe(); err != nil {

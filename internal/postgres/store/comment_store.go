@@ -3,9 +3,11 @@ package store
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	"github.com/escoutdoor/social/internal/types"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 type CommentStore struct {
@@ -26,10 +28,20 @@ func (s *CommentStore) Create(ctx context.Context, userID uuid.UUID, postID uuid
 		RETURNING ID
 	`)
 	if err != nil {
-		return uuid.Nil, err
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+			switch pqErr.Constraint {
+			case "comments_post_id_fkey":
+				return id, ErrPostNotFound
+			case "comments_parent_comment_id_fkey":
+				return id, ErrCommentNotFound
+			}
+		}
+		return id, err
 	}
 
-	err = stmt.QueryRow(input.Content, input.ParentCommentID, postID, userID).Scan(&id)
+	args := []interface{}{input.Content, input.ParentCommentID, postID, userID}
+	err = stmt.QueryRowContext(ctx, args...).Scan(&id)
 	if err != nil {
 		return id, err
 	}
