@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/escoutdoor/social/internal/httpserver/responses"
-	"github.com/escoutdoor/social/internal/postgres/store"
+	"github.com/escoutdoor/social/internal/repository/repoerrs"
 	"github.com/escoutdoor/social/internal/service"
 	"github.com/escoutdoor/social/internal/types"
 	"github.com/escoutdoor/social/pkg/validator"
@@ -48,7 +48,7 @@ func (h *AuthHandler) handleSignUp(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id, err := h.svc.SignUp(ctx, input)
 	if err != nil {
-		if errors.Is(err, store.ErrUserAlreadyExists) {
+		if errors.Is(err, repoerrs.ErrUserAlreadyExists) {
 			responses.BadRequestResponse(w, err)
 			return
 		}

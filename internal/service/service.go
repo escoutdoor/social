@@ -5,7 +5,7 @@ import (
 	"mime/multipart"
 
 	"github.com/escoutdoor/social/internal/cache"
-	"github.com/escoutdoor/social/internal/postgres/store"
+	"github.com/escoutdoor/social/internal/repository"
 	"github.com/escoutdoor/social/internal/s3"
 	"github.com/escoutdoor/social/internal/types"
 	"github.com/escoutdoor/social/pkg/validator"
@@ -51,30 +51,30 @@ type File interface {
 }
 
 type Opts struct {
-	Store     *store.Store
-	Cache     cache.Store
-	S3        s3.Store
-	Validator *validator.Validator
+	Repository *repository.Repository
+	Cache      cache.Repository
+	S3         s3.Repository
+	Validator  *validator.Validator
 
 	SignKey string
 }
 
 func NewServices(opts Opts) *Services {
 	return &Services{
-		Auth:    NewAuthService(opts.Store.Auth, opts.Store.User, opts.SignKey),
-		User:    NewUserService(opts.Store.User, opts.Validator),
-		Post:    NewPostService(opts.Store.Post, opts.Cache),
-		Comment: NewCommentService(opts.Store.Comment, opts.Store.Post),
-		Like:    NewLikeService(opts.Store.Like, opts.Cache),
+		Auth:    NewAuthService(opts.Repository.Auth, opts.Repository.User, opts.SignKey),
+		User:    NewUserService(opts.Repository.User, opts.Validator),
+		Post:    NewPostService(opts.Repository.Post, opts.Cache),
+		Comment: NewCommentService(opts.Repository.Comment, opts.Repository.Post),
+		Like:    NewLikeService(opts.Repository.Like, opts.Cache),
 		File:    NewFileService(opts.S3),
 	}
 }
 
 type Services struct {
-	Auth    Auth
-	User    User
-	Post    Post
-	Comment Comment
-	Like    Like
-	File    File
+	Auth
+	User
+	Post
+	Comment
+	Like
+	File
 }

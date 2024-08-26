@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/escoutdoor/social/internal/httpserver/responses"
-	"github.com/escoutdoor/social/internal/postgres/store"
+	"github.com/escoutdoor/social/internal/repository/repoerrs"
 	"github.com/escoutdoor/social/internal/service"
 	"github.com/escoutdoor/social/internal/types"
 	"github.com/escoutdoor/social/pkg/validator"
@@ -93,7 +93,7 @@ func (h *PostHandler) handleUpdatePost(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, service.ErrAccessDenied):
 			responses.ForbiddenResponse(w, err)
 			return
-		case errors.Is(err, store.ErrPostNotFound):
+		case errors.Is(err, repoerrs.ErrPostNotFound):
 			responses.NotFoundResponse(w, err)
 			return
 		default:
@@ -115,7 +115,7 @@ func (h *PostHandler) handleGetByID(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	post, err := h.svc.GetByID(ctx, id)
 	if err != nil {
-		if errors.Is(err, store.ErrPostNotFound) {
+		if errors.Is(err, repoerrs.ErrPostNotFound) {
 			responses.NotFoundResponse(w, err)
 			return
 		}
@@ -156,7 +156,7 @@ func (h *PostHandler) handleDeletePost(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, service.ErrAccessDenied):
 			responses.ForbiddenResponse(w, err)
 			return
-		case errors.Is(err, store.ErrPostNotFound):
+		case errors.Is(err, repoerrs.ErrPostNotFound):
 			responses.NotFoundResponse(w, err)
 			return
 		default:

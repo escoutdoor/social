@@ -1,26 +1,27 @@
-package store
+package postgres
 
 import (
 	"context"
 	"database/sql"
 	"errors"
 
+	"github.com/escoutdoor/social/internal/repository/repoerrs"
 	"github.com/escoutdoor/social/internal/types"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 )
 
-type CommentStore struct {
+type CommentRepository struct {
 	db *sql.DB
 }
 
-func NewCommentStore(db *sql.DB) *CommentStore {
-	return &CommentStore{
+func NewCommentRepository(db *sql.DB) *CommentRepository {
+	return &CommentRepository{
 		db: db,
 	}
 }
 
-func (s *CommentStore) Create(ctx context.Context, userID uuid.UUID, postID uuid.UUID, input types.CreateCommentReq) (uuid.UUID, error) {
+func (s *CommentRepository) Create(ctx context.Context, userID uuid.UUID, postID uuid.UUID, input types.CreateCommentReq) (uuid.UUID, error) {
 	var id uuid.UUID
 	stmt, err := s.db.PrepareContext(ctx, `
 		INSERT INTO COMMENTS(CONTENT, PARENT_COMMENT_ID, POST_ID, USER_ID)
@@ -32,9 +33,9 @@ func (s *CommentStore) Create(ctx context.Context, userID uuid.UUID, postID uuid
 		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
 			switch pqErr.Constraint {
 			case "comments_post_id_fkey":
-				return id, ErrPostNotFound
+				return id, repoerrs.ErrPostNotFound
 			case "comments_parent_comment_id_fkey":
-				return id, ErrCommentNotFound
+				return id, repoerrs.ErrCommentNotFound
 			}
 		}
 		return id, err
@@ -48,7 +49,7 @@ func (s *CommentStore) Create(ctx context.Context, userID uuid.UUID, postID uuid
 	return id, nil
 }
 
-func (s *CommentStore) GetByID(ctx context.Context, id uuid.UUID) (*types.Comment, error) {
+func (s *CommentRepository) GetByID(ctx context.Context, id uuid.UUID) (*types.Comment, error) {
 	stmt, err := s.db.PrepareContext(ctx, `
 		SELECT * FROM COMMENTS WHERE ID = $1 
 	`)
@@ -63,10 +64,10 @@ func (s *CommentStore) GetByID(ctx context.Context, id uuid.UUID) (*types.Commen
 	if rows.Next() {
 		return scanComment(rows)
 	}
-	return nil, ErrCommentNotFound
+	return nil, repoerrs.ErrCommentNotFound
 }
 
-func (s *CommentStore) GetAll(ctx context.Context, postID uuid.UUID) ([]types.Comment, error) {
+func (s *CommentRepository) GetAll(ctx context.Context, postID uuid.UUID) ([]types.Comment, error) {
 	stmt, err := s.db.PrepareContext(ctx, `
 		WITH RECURSIVE comments_cte AS (
 			SELECT 
@@ -151,7 +152,7 @@ func (s *CommentStore) GetAll(ctx context.Context, postID uuid.UUID) ([]types.Co
 	return comments, nil
 }
 
-func (s *CommentStore) Delete(ctx context.Context, id uuid.UUID) error {
+func (s *CommentRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	stmt, err := s.db.PrepareContext(ctx, `
 		DELETE FROM COMMENTS WHERE ID = $1
 	`)
@@ -161,7 +162,7 @@ func (s *CommentStore) Delete(ctx context.Context, id uuid.UUID) error {
 
 	result, err := stmt.ExecContext(ctx, id)
 	if v, _ := result.RowsAffected(); v == 0 {
-		return ErrCommentNotFound
+		return repoerrs.ErrCommentNotFound
 	}
 	return nil
 }

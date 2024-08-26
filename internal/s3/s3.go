@@ -15,7 +15,7 @@ type MinIOClient struct {
 	cfg *config.Config
 }
 
-type Store interface {
+type Repository interface {
 	Create(file types.File) (string, error)
 	Delete(id string) error
 	GetByID(id string) (string, error)

@@ -1,26 +1,27 @@
-package store
+package postgres
 
 import (
 	"context"
 	"database/sql"
 	"errors"
 
+	"github.com/escoutdoor/social/internal/repository/repoerrs"
 	"github.com/escoutdoor/social/internal/types"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 )
 
-type AuthStore struct {
+type AuthRepository struct {
 	db *sql.DB
 }
 
-func NewAuthStore(db *sql.DB, jwtKey string) *AuthStore {
-	return &AuthStore{
+func NewAuthRepository(db *sql.DB, jwtKey string) *AuthRepository {
+	return &AuthRepository{
 		db: db,
 	}
 }
 
-func (s *AuthStore) Create(ctx context.Context, input types.CreateUserReq) (uuid.UUID, error) {
+func (s *AuthRepository) Create(ctx context.Context, input types.CreateUserReq) (uuid.UUID, error) {
 	var id uuid.UUID
 	stmt, err := s.db.PrepareContext(ctx, `
 		INSERT INTO USERS(FIRST_NAME, LAST_NAME, EMAIL, PASSWORD)
@@ -30,7 +31,7 @@ func (s *AuthStore) Create(ctx context.Context, input types.CreateUserReq) (uuid
 	if err != nil {
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
-			return id, ErrUserAlreadyExists
+			return id, repoerrs.ErrUserAlreadyExists
 		}
 		return id, err
 	}

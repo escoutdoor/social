@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"github.com/escoutdoor/social/internal/httpserver/responses"
-	"github.com/escoutdoor/social/internal/postgres/store"
+	"github.com/escoutdoor/social/internal/repository/repoerrs"
 	"github.com/escoutdoor/social/internal/service"
 )
 
@@ -44,11 +44,11 @@ func (m *AuthMiddleware) Auth(next http.Handler) http.Handler {
 
 		user, err := m.userSvc.GetByID(r.Context(), id)
 		if err != nil {
-			if errors.Is(err, store.ErrUserNotFound) {
+			if errors.Is(err, repoerrs.ErrUserNotFound) {
 				responses.UnauthorizedResponse(w, err)
 				return
 			}
-			slog.Error("AuthMiddleware - UserStore.GetByID", "error", err.Error())
+			slog.Error("AuthMiddleware - UserService.GetByID", "error", err.Error())
 			responses.InternalServerResponse(w, fmt.Errorf("failed to authorize"))
 			return
 		}

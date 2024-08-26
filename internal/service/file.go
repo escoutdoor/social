@@ -9,10 +9,10 @@ import (
 )
 
 type FileService struct {
-	s3 s3.Store
+	s3 s3.Repository
 }
 
-func NewFileService(s3 s3.Store) *FileService {
+func NewFileService(s3 s3.Repository) *FileService {
 	return &FileService{
 		s3: s3,
 	}

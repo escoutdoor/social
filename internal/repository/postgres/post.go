@@ -1,25 +1,26 @@
-package store
+package postgres
 
 import (
 	"context"
 	"database/sql"
 	"errors"
 
+	"github.com/escoutdoor/social/internal/repository/repoerrs"
 	"github.com/escoutdoor/social/internal/types"
 	"github.com/google/uuid"
 )
 
-type PostStore struct {
+type PostRepository struct {
 	db *sql.DB
 }
 
-func NewPostStore(db *sql.DB) *PostStore {
-	return &PostStore{
+func NewPostRepository(db *sql.DB) *PostRepository {
+	return &PostRepository{
 		db: db,
 	}
 }
 
-func (s *PostStore) Create(ctx context.Context, userID uuid.UUID, input types.CreatePostReq) (*types.Post, error) {
+func (s *PostRepository) Create(ctx context.Context, userID uuid.UUID, input types.CreatePostReq) (*types.Post, error) {
 	stmt, err := s.db.PrepareContext(ctx, `
 		INSERT INTO POSTS(CONTENT, USER_ID, PHOTO_URL) VALUES($1, $2, $3)
 		RETURNING ID, CONTENT, USER_ID, PHOTO_URL, CREATED_AT, UPDATED_AT
@@ -37,10 +38,10 @@ func (s *PostStore) Create(ctx context.Context, userID uuid.UUID, input types.Cr
 	if rows.Next() {
 		return scanPost(rows)
 	}
-	return nil, ErrPostNotFound
+	return nil, repoerrs.ErrPostNotFound
 }
 
-func (s *PostStore) Update(ctx context.Context, postID uuid.UUID, input types.Post) (*types.Post, error) {
+func (s *PostRepository) Update(ctx context.Context, postID uuid.UUID, input types.Post) (*types.Post, error) {
 	stmt, err := s.db.PrepareContext(ctx, `
 		UPDATE POSTS SET
 			CONTENT = $1,
@@ -58,7 +59,7 @@ func (s *PostStore) Update(ctx context.Context, postID uuid.UUID, input types.Po
 	return s.GetByID(ctx, postID)
 }
 
-func (s *PostStore) GetByID(ctx context.Context, id uuid.UUID) (*types.Post, error) {
+func (s *PostRepository) GetByID(ctx context.Context, id uuid.UUID) (*types.Post, error) {
 	stmt, err := s.db.PrepareContext(ctx, `
 		SELECT 
 			p.ID,
@@ -89,14 +90,14 @@ func (s *PostStore) GetByID(ctx context.Context, id uuid.UUID) (*types.Post, err
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrPostNotFound
+			return nil, repoerrs.ErrPostNotFound
 		}
 		return nil, err
 	}
 	return &post, err
 }
 
-func (s *PostStore) GetAll(ctx context.Context) ([]types.Post, error) {
+func (s *PostRepository) GetAll(ctx context.Context) ([]types.Post, error) {
 	stmt, err := s.db.PrepareContext(ctx, `SELECT * FROM POSTS`)
 	if err != nil {
 		return nil, err
@@ -118,7 +119,7 @@ func (s *PostStore) GetAll(ctx context.Context) ([]types.Post, error) {
 	return posts, nil
 }
 
-func (s *PostStore) Delete(ctx context.Context, id uuid.UUID) error {
+func (s *PostRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	stmt, err := s.db.PrepareContext(ctx, `
 		DELETE FROM POSTS WHERE ID = $1
 	`)
@@ -131,7 +132,7 @@ func (s *PostStore) Delete(ctx context.Context, id uuid.UUID) error {
 		return err
 	}
 	if ra, _ := res.RowsAffected(); ra == 0 {
-		return ErrPostNotFound
+		return repoerrs.ErrPostNotFound
 	}
 	return nil
 }

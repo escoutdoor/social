@@ -7,26 +7,26 @@ import (
 	"time"
 
 	"github.com/escoutdoor/social/internal/cache"
-	"github.com/escoutdoor/social/internal/postgres/store"
+	"github.com/escoutdoor/social/internal/repository"
 	"github.com/escoutdoor/social/internal/types"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
 
 type PostService struct {
-	store store.PostStorer
-	cache cache.Store
+	repo  repository.Post
+	cache cache.Repository
 }
 
-func NewPostService(store store.PostStorer, cache cache.Store) *PostService {
+func NewPostService(repo repository.Post, cache cache.Repository) *PostService {
 	return &PostService{
-		store: store,
+		repo:  repo,
 		cache: cache,
 	}
 }
 
 func (s *PostService) Create(ctx context.Context, userID uuid.UUID, input types.CreatePostReq) (*types.Post, error) {
-	post, err := s.store.Create(ctx, userID, input)
+	post, err := s.repo.Create(ctx, userID, input)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func (s *PostService) Update(ctx context.Context, postID, userID uuid.UUID, inpu
 	key := generatePostKey(postID)
 	p, err := s.cache.GetPost(ctx, key)
 	if errors.Is(err, redis.Nil) {
-		p, err = s.store.GetByID(ctx, postID)
+		p, err = s.repo.GetByID(ctx, postID)
 		if err != nil {
 			return nil, err
 		}
@@ -61,7 +61,7 @@ func (s *PostService) Update(ctx context.Context, postID, userID uuid.UUID, inpu
 		p.PhotoURL = input.PhotoURL
 	}
 
-	post, err := s.store.Update(ctx, postID, *p)
+	post, err := s.repo.Update(ctx, postID, *p)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (s *PostService) GetByID(ctx context.Context, id uuid.UUID) (*types.Post, e
 	key := generatePostKey(id)
 	post, err := s.cache.GetPost(ctx, key)
 	if errors.Is(err, redis.Nil) {
-		post, err = s.store.GetByID(ctx, id)
+		post, err = s.repo.GetByID(ctx, id)
 		if err != nil {
 			return nil, err
 		}
@@ -93,7 +93,7 @@ func (s *PostService) GetAll(ctx context.Context) ([]types.Post, error) {
 
 	posts, err := s.cache.GetPosts(ctx, key)
 	if errors.Is(err, redis.Nil) {
-		posts, err = s.store.GetAll(ctx)
+		posts, err = s.repo.GetAll(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -111,7 +111,7 @@ func (s *PostService) Delete(ctx context.Context, postID uuid.UUID, userID uuid.
 	key := generatePostKey(postID)
 	p, err := s.cache.GetPost(ctx, key)
 	if errors.Is(err, redis.Nil) {
-		p, err = s.store.GetByID(ctx, postID)
+		p, err = s.repo.GetByID(ctx, postID)
 		if err != nil {
 			return err
 		}

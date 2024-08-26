@@ -7,8 +7,8 @@ import (
 	"github.com/escoutdoor/social/internal/cache"
 	"github.com/escoutdoor/social/internal/config"
 	"github.com/escoutdoor/social/internal/httpserver"
-	"github.com/escoutdoor/social/internal/postgres"
-	"github.com/escoutdoor/social/internal/postgres/store"
+	"github.com/escoutdoor/social/internal/repository"
+	"github.com/escoutdoor/social/internal/repository/postgres"
 	"github.com/escoutdoor/social/internal/s3"
 	"github.com/escoutdoor/social/internal/service"
 	"github.com/escoutdoor/social/pkg/logger"
@@ -28,8 +28,7 @@ func Run() error {
 	}
 	defer db.Close()
 	slog.Info("successfully connected to postgres")
-
-	store := store.NewStore(db, cfg)
+	repo := repository.New(db, cfg)
 
 	s3, err := s3.New(cfg)
 	if err != nil {
@@ -46,11 +45,11 @@ func Run() error {
 	validator := validator.New()
 
 	services := service.NewServices(service.Opts{
-		Store:     store,
-		Cache:     cache,
-		S3:        s3,
-		Validator: validator,
-		SignKey:   cfg.SignKey,
+		Repository: repo,
+		Cache:      cache,
+		S3:         s3,
+		Validator:  validator,
+		SignKey:    cfg.SignKey,
 	})
 
 	slog.Info("server is running", slog.Int("port", cfg.Port))

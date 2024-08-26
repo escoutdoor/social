@@ -1,32 +1,33 @@
-package store
+package postgres
 
 import (
 	"context"
 	"database/sql"
 	"errors"
 
+	"github.com/escoutdoor/social/internal/repository/repoerrs"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 )
 
-type LikeStore struct {
+type LikeRepository struct {
 	db *sql.DB
 }
 
-func NewLikeStore(db *sql.DB) *LikeStore {
-	return &LikeStore{
+func NewLikeRepository(db *sql.DB) *LikeRepository {
+	return &LikeRepository{
 		db: db,
 	}
 }
 
-func (s *LikeStore) LikePost(ctx context.Context, postID uuid.UUID, userID uuid.UUID) error {
+func (s *LikeRepository) LikePost(ctx context.Context, postID uuid.UUID, userID uuid.UUID) error {
 	stmt, err := s.db.PrepareContext(ctx, `
 		INSERT INTO POST_LIKES(POST_ID, USER_ID) VALUES ($1, $2)
 	`)
 	if err != nil {
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
-			return ErrPostNotFound
+			return repoerrs.ErrPostNotFound
 		}
 		return err
 	}
@@ -35,12 +36,12 @@ func (s *LikeStore) LikePost(ctx context.Context, postID uuid.UUID, userID uuid.
 		return err
 	}
 	if ra, _ := res.RowsAffected(); ra == 0 {
-		return ErrLikeFailed
+		return repoerrs.ErrLikeFailed
 	}
 	return nil
 }
 
-func (s *LikeStore) RemoveLikeFromPost(ctx context.Context, postID uuid.UUID, userID uuid.UUID) error {
+func (s *LikeRepository) RemoveLikeFromPost(ctx context.Context, postID uuid.UUID, userID uuid.UUID) error {
 	stmt, err := s.db.PrepareContext(ctx, `
 		DELETE FROM POST_LIKES WHERE POST_ID = $1 AND USER_ID = $2
 	`)
@@ -52,12 +53,12 @@ func (s *LikeStore) RemoveLikeFromPost(ctx context.Context, postID uuid.UUID, us
 		return err
 	}
 	if ra, _ := res.RowsAffected(); ra == 0 {
-		return ErrRemoveLikeFailed
+		return repoerrs.ErrRemoveLikeFailed
 	}
 	return nil
 }
 
-func (s *LikeStore) IsPostLiked(ctx context.Context, postID uuid.UUID) (bool, error) {
+func (s *LikeRepository) IsPostLiked(ctx context.Context, postID uuid.UUID) (bool, error) {
 	stmt, err := s.db.PrepareContext(ctx, `SELECT COUNT(*) FROM POST_LIKES WHERE POST_ID = $1`)
 	if err != nil {
 		return false, err
@@ -69,14 +70,14 @@ func (s *LikeStore) IsPostLiked(ctx context.Context, postID uuid.UUID) (bool, er
 	return count != 0, nil
 }
 
-func (s *LikeStore) LikeComment(ctx context.Context, commentID uuid.UUID, userID uuid.UUID) error {
+func (s *LikeRepository) LikeComment(ctx context.Context, commentID uuid.UUID, userID uuid.UUID) error {
 	stmt, err := s.db.PrepareContext(ctx, `
 		INSERT INTO COMMENT_LIKES(COMMENT_ID, USER_ID) VALUES ($1, $2)
 	`)
 	if err != nil {
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
-			return ErrCommentNotFound
+			return repoerrs.ErrCommentNotFound
 		}
 		return err
 	}
@@ -85,12 +86,12 @@ func (s *LikeStore) LikeComment(ctx context.Context, commentID uuid.UUID, userID
 		return err
 	}
 	if ra, _ := res.RowsAffected(); ra == 0 {
-		return ErrLikeFailed
+		return repoerrs.ErrLikeFailed
 	}
 	return nil
 }
 
-func (s *LikeStore) RemoveLikeFromComment(ctx context.Context, commentID uuid.UUID, userID uuid.UUID) error {
+func (s *LikeRepository) RemoveLikeFromComment(ctx context.Context, commentID uuid.UUID, userID uuid.UUID) error {
 	stmt, err := s.db.PrepareContext(ctx, `
 		DELETE FROM COMMENT_LIKES WHERE COMMENT_ID = $1 AND USER_ID = $2
 	`)
@@ -102,12 +103,12 @@ func (s *LikeStore) RemoveLikeFromComment(ctx context.Context, commentID uuid.UU
 		return err
 	}
 	if ra, _ := res.RowsAffected(); ra == 0 {
-		return ErrRemoveLikeFailed
+		return repoerrs.ErrRemoveLikeFailed
 	}
 	return nil
 }
 
-func (s *LikeStore) IsCommentLiked(ctx context.Context, commentID uuid.UUID) (bool, error) {
+func (s *LikeRepository) IsCommentLiked(ctx context.Context, commentID uuid.UUID) (bool, error) {
 	stmt, err := s.db.PrepareContext(ctx, `SELECT COUNT(*) FROM COMMENT_LIKES WHERE COMMENT_ID = $1`)
 	if err != nil {
 		return false, err

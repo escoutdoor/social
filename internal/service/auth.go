@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/escoutdoor/social/internal/postgres/store"
+	"github.com/escoutdoor/social/internal/repository"
+	"github.com/escoutdoor/social/internal/repository/repoerrs"
 	"github.com/escoutdoor/social/internal/types"
 	"github.com/escoutdoor/social/pkg/hasher"
 	"github.com/golang-jwt/jwt/v5"
@@ -14,16 +15,16 @@ import (
 )
 
 type AuthService struct {
-	store     store.AuthStorer
-	userStore store.UserStorer
-	signKey   string
+	repo     repository.Auth
+	userRepo repository.User
+	signKey  string
 }
 
-func NewAuthService(store store.AuthStorer, userStore store.UserStorer, signKey string) *AuthService {
+func NewAuthService(repo repository.Auth, userRepo repository.User, signKey string) *AuthService {
 	return &AuthService{
-		store:     store,
-		userStore: userStore,
-		signKey:   signKey,
+		repo:     repo,
+		userRepo: userRepo,
+		signKey:  signKey,
 	}
 }
 
@@ -34,13 +35,13 @@ func (s *AuthService) SignUp(ctx context.Context, input types.CreateUserReq) (uu
 		return uuid.Nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	return s.store.Create(ctx, input)
+	return s.repo.Create(ctx, input)
 }
 
 func (s *AuthService) SignIn(ctx context.Context, input types.LoginReq) (string, error) {
-	user, err := s.userStore.GetByEmail(ctx, input.Email)
+	user, err := s.userRepo.GetByEmail(ctx, input.Email)
 	if err != nil {
-		if errors.Is(err, store.ErrUserNotFound) {
+		if errors.Is(err, repoerrs.ErrUserNotFound) {
 			return "", ErrInvalidEmailOrPw
 		}
 		return "", err

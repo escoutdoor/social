@@ -1,4 +1,4 @@
-package store
+package postgres
 
 import (
 	"context"
@@ -6,22 +6,23 @@ import (
 	"errors"
 	"time"
 
+	"github.com/escoutdoor/social/internal/repository/repoerrs"
 	"github.com/escoutdoor/social/internal/types"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 )
 
-type UserStore struct {
+type UserRepository struct {
 	db *sql.DB
 }
 
-func NewUserStore(db *sql.DB) *UserStore {
-	return &UserStore{
+func NewUserRepository(db *sql.DB) *UserRepository {
+	return &UserRepository{
 		db: db,
 	}
 }
 
-func (s *UserStore) GetByID(ctx context.Context, id uuid.UUID) (*types.User, error) {
+func (s *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*types.User, error) {
 	stmt, err := s.db.PrepareContext(ctx, `
 		SELECT * FROM USERS WHERE ID = $1
 	`)
@@ -37,10 +38,10 @@ func (s *UserStore) GetByID(ctx context.Context, id uuid.UUID) (*types.User, err
 	if rows.Next() {
 		return scanUser(rows)
 	}
-	return nil, ErrUserNotFound
+	return nil, repoerrs.ErrUserNotFound
 }
 
-func (s *UserStore) GetByEmail(ctx context.Context, email string) (*types.User, error) {
+func (s *UserRepository) GetByEmail(ctx context.Context, email string) (*types.User, error) {
 	stmt, err := s.db.PrepareContext(ctx, `
 		SELECT * FROM USERS WHERE EMAIL = $1
 	`)
@@ -56,10 +57,10 @@ func (s *UserStore) GetByEmail(ctx context.Context, email string) (*types.User, 
 	if rows.Next() {
 		return scanUser(rows)
 	}
-	return nil, ErrUserNotFound
+	return nil, repoerrs.ErrUserNotFound
 }
 
-func (s *UserStore) Update(ctx context.Context, input types.User) (*types.User, error) {
+func (s *UserRepository) Update(ctx context.Context, input types.User) (*types.User, error) {
 	stmt, err := s.db.PrepareContext(ctx, `
 		UPDATE USERS SET
 			FIRST_NAME = $1,
@@ -74,7 +75,7 @@ func (s *UserStore) Update(ctx context.Context, input types.User) (*types.User, 
 	if err != nil {
 		var errPq *pq.Error
 		if errors.As(err, &errPq) && errPq.Code == "23505" {
-			return nil, ErrEmailAlreadyExists
+			return nil, repoerrs.ErrEmailAlreadyExists
 		}
 		return nil, err
 	}
@@ -96,7 +97,7 @@ func (s *UserStore) Update(ctx context.Context, input types.User) (*types.User, 
 	return s.GetByID(ctx, input.ID)
 }
 
-func (s *UserStore) Delete(ctx context.Context, id uuid.UUID) error {
+func (s *UserRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	stmt, err := s.db.PrepareContext(ctx, `
 		DELETE FROM USERS WHERE ID = $1
 	`)
@@ -106,7 +107,7 @@ func (s *UserStore) Delete(ctx context.Context, id uuid.UUID) error {
 
 	result, err := stmt.ExecContext(ctx, id)
 	if v, _ := result.RowsAffected(); v == 0 {
-		return ErrUserNotFound
+		return repoerrs.ErrUserNotFound
 	}
 	return nil
 }

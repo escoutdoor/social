@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/escoutdoor/social/internal/postgres/store"
+	"github.com/escoutdoor/social/internal/repository"
 	"github.com/escoutdoor/social/internal/types"
 	"github.com/escoutdoor/social/pkg/hasher"
 	"github.com/escoutdoor/social/pkg/validator"
@@ -12,19 +12,19 @@ import (
 )
 
 type UserService struct {
-	store     store.UserStorer
+	repo      repository.User
 	validator *validator.Validator
 }
 
-func NewUserService(store store.UserStorer, validator *validator.Validator) *UserService {
+func NewUserService(repo repository.User, validator *validator.Validator) *UserService {
 	return &UserService{
-		store:     store,
+		repo:      repo,
 		validator: validator,
 	}
 }
 
 func (s *UserService) GetByID(ctx context.Context, id uuid.UUID) (*types.User, error) {
-	return s.store.GetByID(ctx, id)
+	return s.repo.GetByID(ctx, id)
 }
 
 func (s *UserService) Update(ctx context.Context, user types.User, input types.UpdateUserReq) (*types.User, error) {
@@ -59,9 +59,9 @@ func (s *UserService) Update(ctx context.Context, user types.User, input types.U
 		user.AvatarURL = input.AvatarURL
 	}
 
-	return s.store.Update(ctx, user)
+	return s.repo.Update(ctx, user)
 }
 
 func (s *UserService) Delete(ctx context.Context, id uuid.UUID) error {
-	return s.store.Delete(ctx, id)
+	return s.repo.Delete(ctx, id)
 }

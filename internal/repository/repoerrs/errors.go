@@ -1,4 +1,4 @@
-package store
+package repoerrs
 
 import (
 	"errors"

@@ -36,7 +36,7 @@ func (h *FileHandler) create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	url, err := h.svc.Create(ctx, src, hdr)
 	if err != nil {
-		slog.Error("FileHandler.Create - S3.Create", "error", err)
+		slog.Error("FileHandler.Create - FileService.Create", "error", err)
 		responses.InternalServerResponse(w, ErrFileSaveFailed)
 		return
 	}

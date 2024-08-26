@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/escoutdoor/social/internal/httpserver/responses"
-	"github.com/escoutdoor/social/internal/postgres/store"
+	"github.com/escoutdoor/social/internal/repository/repoerrs"
 	"github.com/escoutdoor/social/internal/service"
 	"github.com/escoutdoor/social/internal/types"
 	"github.com/escoutdoor/social/pkg/validator"
@@ -45,7 +45,7 @@ func (h *UserHandler) handleGetByID(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	user, err := h.svc.GetByID(ctx, id)
 	if err != nil {
-		if errors.Is(err, store.ErrUserNotFound) {
+		if errors.Is(err, repoerrs.ErrUserNotFound) {
 			responses.NotFoundResponse(w, err)
 			return
 		}
@@ -98,7 +98,7 @@ func (h *UserHandler) handleDeleteUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	err = h.svc.Delete(ctx, user.ID)
 	if err != nil {
-		if errors.Is(err, store.ErrUserNotFound) {
+		if errors.Is(err, repoerrs.ErrUserNotFound) {
 			responses.NotFoundResponse(w, err)
 			return
 		}

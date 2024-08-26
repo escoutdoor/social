@@ -20,7 +20,7 @@ type Cache struct {
 	*redis.Client
 }
 
-type Store interface {
+type Repository interface {
 	GetPost(ctx context.Context, key string) (*types.Post, error)
 	GetPosts(ctx context.Context, key string) ([]types.Post, error)
 

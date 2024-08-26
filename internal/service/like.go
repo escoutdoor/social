@@ -7,19 +7,19 @@ import (
 	"time"
 
 	"github.com/escoutdoor/social/internal/cache"
-	"github.com/escoutdoor/social/internal/postgres/store"
+	"github.com/escoutdoor/social/internal/repository"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
 
 type LikeService struct {
-	store store.LikeStorer
-	cache cache.Store
+	repo  repository.Like
+	cache cache.Repository
 }
 
-func NewLikeService(store store.LikeStorer, cache cache.Store) *LikeService {
+func NewLikeService(repo repository.Like, cache cache.Repository) *LikeService {
 	return &LikeService{
-		store: store,
+		repo:  repo,
 		cache: cache,
 	}
 }
@@ -93,9 +93,9 @@ func (s *LikeService) RemoveLikeFromComment(ctx context.Context, commentID uuid.
 }
 
 func (s *LikeService) isPostLiked(ctx context.Context, postID uuid.UUID) (bool, error) {
-	return s.store.IsPostLiked(ctx, postID)
+	return s.repo.IsPostLiked(ctx, postID)
 }
 
 func (s *LikeService) isCommentLiked(ctx context.Context, commentID uuid.UUID) (bool, error) {
-	return s.store.IsCommentLiked(ctx, commentID)
+	return s.repo.IsCommentLiked(ctx, commentID)
 }

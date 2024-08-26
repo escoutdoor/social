@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/escoutdoor/social/internal/httpserver/responses"
-	"github.com/escoutdoor/social/internal/postgres/store"
+	"github.com/escoutdoor/social/internal/repository/repoerrs"
 	"github.com/escoutdoor/social/internal/service"
 	"github.com/go-chi/chi/v5"
 )
@@ -52,7 +52,7 @@ func (h *LikeHandler) handleLikePost(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, service.ErrAlreadyLiked):
 			responses.BadRequestResponse(w, err)
 			return
-		case errors.Is(err, store.ErrPostNotFound):
+		case errors.Is(err, repoerrs.ErrPostNotFound):
 			responses.NotFoundResponse(w, err)
 			return
 		default:
@@ -78,7 +78,7 @@ func (h *LikeHandler) handleRemoveLikeFromPost(w http.ResponseWriter, r *http.Re
 
 	ctx := r.Context()
 	if err := h.svc.RemoveLikeFromPost(ctx, postID, user.ID); err != nil {
-		if errors.Is(err, store.ErrRemoveLikeFailed) {
+		if errors.Is(err, repoerrs.ErrRemoveLikeFailed) {
 			responses.BadRequestResponse(w, err)
 			return
 		}
@@ -108,7 +108,7 @@ func (h *LikeHandler) handleLikeComment(w http.ResponseWriter, r *http.Request) 
 		case errors.Is(err, service.ErrAlreadyLiked):
 			responses.BadRequestResponse(w, err)
 			return
-		case errors.Is(err, store.ErrCommentNotFound):
+		case errors.Is(err, repoerrs.ErrCommentNotFound):
 			responses.NotFoundResponse(w, err)
 			return
 		default:
@@ -134,7 +134,7 @@ func (h *LikeHandler) handleRemoveLikeFromComment(w http.ResponseWriter, r *http
 
 	ctx := r.Context()
 	if err := h.svc.RemoveLikeFromComment(ctx, commentID, user.ID); err != nil {
-		if errors.Is(err, store.ErrRemoveLikeFailed) {
+		if errors.Is(err, repoerrs.ErrRemoveLikeFailed) {
 			responses.BadRequestResponse(w, err)
 			return
 		}

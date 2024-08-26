@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/escoutdoor/social/internal/httpserver/responses"
-	"github.com/escoutdoor/social/internal/postgres/store"
+	"github.com/escoutdoor/social/internal/repository/repoerrs"
 	"github.com/escoutdoor/social/internal/service"
 	"github.com/escoutdoor/social/internal/types"
 	"github.com/escoutdoor/social/pkg/validator"
@@ -61,10 +61,10 @@ func (h *CommentHandler) handleCreateComment(w http.ResponseWriter, r *http.Requ
 	id, err := h.svc.Create(ctx, user.ID, postID, input)
 	if err != nil {
 		switch {
-		case errors.Is(err, store.ErrPostNotFound):
+		case errors.Is(err, repoerrs.ErrPostNotFound):
 			responses.NotFoundResponse(w, err)
 			return
-		case errors.Is(err, store.ErrCommentNotFound):
+		case errors.Is(err, repoerrs.ErrCommentNotFound):
 			responses.NotFoundResponse(w, err)
 			return
 		default:
@@ -86,8 +86,8 @@ func (h *CommentHandler) handleGetByID(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	comment, err := h.svc.GetByID(ctx, id)
 	if err != nil {
-		if errors.Is(err, store.ErrCommentNotFound) {
-			responses.NotFoundResponse(w, store.ErrCommentNotFound)
+		if errors.Is(err, repoerrs.ErrCommentNotFound) {
+			responses.NotFoundResponse(w, repoerrs.ErrCommentNotFound)
 			return
 		}
 		slog.Error("CommentHandler.handleGetByID - CommentService.GetByID", "error", err)
@@ -107,7 +107,7 @@ func (h *CommentHandler) handleGetAll(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	comments, err := h.svc.GetAll(ctx, postID)
 	if err != nil {
-		if errors.Is(err, store.ErrPostNotFound) {
+		if errors.Is(err, repoerrs.ErrPostNotFound) {
 			responses.NotFoundResponse(w, err)
 			return
 		}
@@ -137,7 +137,7 @@ func (h *CommentHandler) handleDeleteComment(w http.ResponseWriter, r *http.Requ
 		case errors.Is(err, service.ErrAccessDenied):
 			responses.ForbiddenResponse(w, err)
 			return
-		case errors.Is(err, store.ErrCommentNotFound):
+		case errors.Is(err, repoerrs.ErrCommentNotFound):
 			responses.NotFoundResponse(w, err)
 			return
 		default:
