@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/escoutdoor/social/internal/config"
 	"github.com/escoutdoor/social/internal/repository/postgres"
 	"github.com/escoutdoor/social/internal/types"
 	"github.com/google/uuid"
@@ -45,9 +44,9 @@ type Comment interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
-func New(db *sql.DB, cfg *config.Config) *Repository {
+func New(db *sql.DB) *Repository {
 	return &Repository{
-		Auth:    postgres.NewAuthRepository(db, cfg.SignKey),
+		Auth:    postgres.NewAuthRepository(db),
 		User:    postgres.NewUserRepository(db),
 		Post:    postgres.NewPostRepository(db),
 		Like:    postgres.NewLikeRepository(db),

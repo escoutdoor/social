@@ -28,7 +28,7 @@ func Run() error {
 	}
 	defer db.Close()
 	slog.Info("successfully connected to postgres")
-	repo := repository.New(db, cfg)
+	repo := repository.New(db)
 
 	s3, err := s3.New(cfg)
 	if err != nil {
