@@ -80,12 +80,17 @@ func (s *UserRepository) Update(ctx context.Context, input types.User) (*types.U
 		return nil, err
 	}
 
+	var dob time.Time
+	if input.DOB != nil {
+		dob = time.Time(*input.DOB)
+	}
+
 	args := []interface{}{
 		input.FirstName,
 		input.LastName,
 		input.Email,
 		input.Password,
-		time.Time(*input.DOB),
+		dob,
 		input.Bio,
 		input.AvatarURL,
 		input.ID,
