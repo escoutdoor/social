@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/escoutdoor/social/internal/config"
 	"github.com/escoutdoor/social/internal/types"
 	"github.com/redis/go-redis/v9"
 )
@@ -28,8 +27,8 @@ type Repository interface {
 	Del(ctx context.Context, keys ...string) *redis.IntCmd
 }
 
-func New(cfg *config.Config) (*Cache, error) {
-	opts, err := redis.ParseURL(cfg.RedisURL)
+func New(redisURL string) (*Cache, error) {
+	opts, err := redis.ParseURL(redisURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse redis url: %w", err)
 	}

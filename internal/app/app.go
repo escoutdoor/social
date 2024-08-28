@@ -36,7 +36,7 @@ func Run() error {
 	}
 	slog.Info("successfully connected to s3")
 
-	cache, err := cache.New(cfg)
+	cache, err := cache.New(cfg.RedisURL)
 	if err != nil {
 		return fmt.Errorf("failed to connect to redis: %w", err)
 	}
