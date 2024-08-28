@@ -109,10 +109,6 @@ func TestAuthService(t *testing.T) {
 	suite.Run(t, new(authServiceSuite))
 }
 
-func (st *authServiceSuite) AfterTest(suiteName, testName string) {
-	st.container.Terminate(context.Background())
-}
-
 func randomPw() string {
 	return gofakeit.Password(true, true, true, true, false, 6)
 }

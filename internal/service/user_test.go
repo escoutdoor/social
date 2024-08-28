@@ -146,10 +146,6 @@ func TestUserService(t *testing.T) {
 	suite.Run(t, new(userServiceSuite))
 }
 
-func (st *userServiceSuite) AfterTest(suiteName, testName string) {
-	st.container.Terminate(context.Background())
-}
-
 func strToPtr(s string) *string {
 	return &s
 }
