@@ -29,8 +29,14 @@ func (s *CommentRepository) Create(ctx context.Context, userID uuid.UUID, postID
 		RETURNING ID
 	`)
 	if err != nil {
+		return id, err
+	}
+
+	args := []interface{}{input.Content, input.ParentCommentID, postID, userID}
+	err = stmt.QueryRowContext(ctx, args...).Scan(&id)
+	if err != nil {
 		var pqErr *pq.Error
-		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+		if errors.As(err, &pqErr) && pqErr.Code == "23503" {
 			switch pqErr.Constraint {
 			case "comments_post_id_fkey":
 				return id, repoerrs.ErrPostNotFound
@@ -38,12 +44,6 @@ func (s *CommentRepository) Create(ctx context.Context, userID uuid.UUID, postID
 				return id, repoerrs.ErrCommentNotFound
 			}
 		}
-		return id, err
-	}
-
-	args := []interface{}{input.Content, input.ParentCommentID, postID, userID}
-	err = stmt.QueryRowContext(ctx, args...).Scan(&id)
-	if err != nil {
 		return id, err
 	}
 	return id, nil

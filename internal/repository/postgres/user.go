@@ -73,10 +73,6 @@ func (s *UserRepository) Update(ctx context.Context, input types.User) (*types.U
 		WHERE ID = $8
 	`)
 	if err != nil {
-		var errPq *pq.Error
-		if errors.As(err, &errPq) && errPq.Code == "23505" {
-			return nil, repoerrs.ErrEmailAlreadyExists
-		}
 		return nil, err
 	}
 
@@ -97,6 +93,10 @@ func (s *UserRepository) Update(ctx context.Context, input types.User) (*types.U
 	}
 	_, err = stmt.ExecContext(ctx, args...)
 	if err != nil {
+		var errPq *pq.Error
+		if errors.As(err, &errPq) && errPq.Code == "23505" {
+			return nil, repoerrs.ErrEmailAlreadyExists
+		}
 		return nil, err
 	}
 	return s.GetByID(ctx, input.ID)

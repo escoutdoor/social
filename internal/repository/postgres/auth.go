@@ -29,16 +29,16 @@ func (s *AuthRepository) Create(ctx context.Context, input types.CreateUserReq) 
 		RETURNING ID
 	`)
 	if err != nil {
-		var pqErr *pq.Error
-		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
-			return id, repoerrs.ErrUserAlreadyExists
-		}
 		return id, err
 	}
 
 	args := []interface{}{input.FirstName, input.LastName, input.Email, input.Password}
 	err = stmt.QueryRowContext(ctx, args...).Scan(&id)
 	if err != nil {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+			return id, repoerrs.ErrUserAlreadyExists
+		}
 		return id, err
 	}
 

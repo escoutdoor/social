@@ -33,7 +33,7 @@ func (s *LikeService) LikePost(ctx context.Context, postID uuid.UUID, userID uui
 		return ErrAlreadyLiked
 	}
 
-	err = s.LikePost(ctx, postID, userID)
+	err = s.repo.LikePost(ctx, postID, userID)
 	if err != nil {
 		return err
 	}
@@ -63,11 +63,11 @@ func (s *LikeService) LikeComment(ctx context.Context, commentID uuid.UUID, user
 		return ErrAlreadyLiked
 	}
 
-	return s.LikeComment(ctx, commentID, userID)
+	return s.repo.LikeComment(ctx, commentID, userID)
 }
 
 func (s *LikeService) RemoveLikeFromPost(ctx context.Context, postID uuid.UUID, userID uuid.UUID) error {
-	err := s.RemoveLikeFromPost(ctx, postID, userID)
+	err := s.repo.RemoveLikeFromPost(ctx, postID, userID)
 	if err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func (s *LikeService) RemoveLikeFromPost(ctx context.Context, postID uuid.UUID, 
 }
 
 func (s *LikeService) RemoveLikeFromComment(ctx context.Context, commentID uuid.UUID, userID uuid.UUID) error {
-	return s.RemoveLikeFromComment(ctx, commentID, userID)
+	return s.repo.RemoveLikeFromComment(ctx, commentID, userID)
 }
 
 func (s *LikeService) isPostLiked(ctx context.Context, postID uuid.UUID) (bool, error) {

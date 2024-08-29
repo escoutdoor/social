@@ -25,14 +25,15 @@ func (s *LikeRepository) LikePost(ctx context.Context, postID uuid.UUID, userID 
 		INSERT INTO POST_LIKES(POST_ID, USER_ID) VALUES ($1, $2)
 	`)
 	if err != nil {
-		var pqErr *pq.Error
-		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
-			return repoerrs.ErrPostNotFound
-		}
 		return err
 	}
+
 	res, err := stmt.ExecContext(ctx, postID, userID)
 	if err != nil {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23503" {
+			return repoerrs.ErrPostNotFound
+		}
 		return err
 	}
 	if ra, _ := res.RowsAffected(); ra == 0 {
@@ -63,6 +64,7 @@ func (s *LikeRepository) IsPostLiked(ctx context.Context, postID uuid.UUID) (boo
 	if err != nil {
 		return false, err
 	}
+
 	var count int
 	if err = stmt.QueryRowContext(ctx, postID).Scan(&count); err != nil {
 		return false, err
@@ -75,14 +77,15 @@ func (s *LikeRepository) LikeComment(ctx context.Context, commentID uuid.UUID, u
 		INSERT INTO COMMENT_LIKES(COMMENT_ID, USER_ID) VALUES ($1, $2)
 	`)
 	if err != nil {
-		var pqErr *pq.Error
-		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
-			return repoerrs.ErrCommentNotFound
-		}
 		return err
 	}
+
 	res, err := stmt.ExecContext(ctx, commentID, userID)
 	if err != nil {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23503" {
+			return repoerrs.ErrCommentNotFound
+		}
 		return err
 	}
 	if ra, _ := res.RowsAffected(); ra == 0 {
@@ -96,8 +99,10 @@ func (s *LikeRepository) RemoveLikeFromComment(ctx context.Context, commentID uu
 		DELETE FROM COMMENT_LIKES WHERE COMMENT_ID = $1 AND USER_ID = $2
 	`)
 	if err != nil {
+
 		return err
 	}
+
 	res, err := stmt.ExecContext(ctx, commentID, userID)
 	if err != nil {
 		return err
@@ -113,6 +118,7 @@ func (s *LikeRepository) IsCommentLiked(ctx context.Context, commentID uuid.UUID
 	if err != nil {
 		return false, err
 	}
+
 	var count int
 	if err = stmt.QueryRowContext(ctx, commentID).Scan(&count); err != nil {
 		return false, err
