@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/brianvoe/gofakeit/v7"
-	"github.com/escoutdoor/social/internal/repository/postgres"
+	"github.com/escoutdoor/social/internal/repository"
+	"github.com/escoutdoor/social/internal/repository/repoerrs"
 	"github.com/escoutdoor/social/internal/testutils"
 	"github.com/escoutdoor/social/internal/types"
 	"github.com/stretchr/testify/suite"
@@ -24,15 +25,14 @@ type authServiceSuite struct {
 
 func (st *authServiceSuite) SetupTest() {
 	container, db, err := testutils.NewPostgresContainer()
-	st.Require().NoError(err, "failed to run container")
-	st.Require().NotEmpty(container, "expected to get non-empty container")
-	st.Require().NotEmpty(db, "expected to get non-empty db connection")
+	st.Require().NoError(err, "failed to run postgres container")
+	st.Require().NotEmpty(container, "expected to get postgres container")
+	st.Require().NotEmpty(db, "expected to get db connection")
 
-	authRepo := postgres.NewAuthRepository(db)
-	userRepo := postgres.NewUserRepository(db)
+	repo := repository.New(db)
 
 	st.container = container
-	st.svc = NewAuthService(authRepo, userRepo, signKey)
+	st.svc = NewAuthService(repo.Auth, repo.User, signKey)
 }
 
 func (st *authServiceSuite) TestSignUp() {
@@ -46,7 +46,7 @@ func (st *authServiceSuite) TestSignUp() {
 
 	id, err := st.svc.SignUp(ctx, in)
 	st.NoError(err, "failed to signup")
-	st.NotEmpty(id, "id should be non-empty")
+	st.NotEmpty(id, "expected to get user id")
 }
 
 func (st *authServiceSuite) TestSignUpSignInParseToken() {
@@ -60,7 +60,7 @@ func (st *authServiceSuite) TestSignUpSignInParseToken() {
 	}
 	id, err := st.svc.SignUp(ctx, registerIn)
 	st.NoError(err, "failed to signup")
-	st.NotEmpty(id, "id should be non-empty")
+	st.NotEmpty(id, "expected to get user id")
 
 	loginIn := types.LoginReq{
 		Email:    registerIn.Email,
@@ -68,11 +68,11 @@ func (st *authServiceSuite) TestSignUpSignInParseToken() {
 	}
 	token, err := st.svc.SignIn(ctx, loginIn)
 	st.NoError(err, "failed to signin")
-	st.NotEmpty(token, "expected to get non-empty value")
+	st.NotEmpty(token, "expected to get token")
 
 	tokenID, err := st.svc.ParseToken(token)
 	st.NoError(err, "failed to parse token")
-	st.Equal(id, tokenID, "id's not equal")
+	st.Equal(id, tokenID, "user id from claims doesn't match user id")
 }
 
 func (st *authServiceSuite) TestSignUpWithExistingEmail() {
@@ -90,7 +90,8 @@ func (st *authServiceSuite) TestSignUpWithExistingEmail() {
 
 	id, err = st.svc.SignUp(ctx, in)
 	st.Error(err, "expected to get error: user already exists")
-	st.Empty(id, "id should be empty")
+	st.ErrorIs(err, repoerrs.ErrUserAlreadyExists, "expected to get user already exists error")
+	st.Empty(id, "expected to get no data")
 }
 
 func (st *authServiceSuite) TestSignInWithFakeEmail() {
@@ -102,7 +103,8 @@ func (st *authServiceSuite) TestSignInWithFakeEmail() {
 
 	token, err := st.svc.SignIn(ctx, in)
 	st.Error(err, "expected to get error: invalid email or password")
-	st.Empty(token, "expected to get empty value")
+	st.ErrorIs(err, ErrInvalidEmailOrPw, "expected to get invalid email or password error")
+	st.Empty(token, "expected to get no data")
 }
 
 func TestAuthService(t *testing.T) {

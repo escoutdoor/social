@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
-	"github.com/escoutdoor/social/internal/repository/postgres"
+	"github.com/escoutdoor/social/internal/repository"
 	"github.com/escoutdoor/social/internal/testutils"
 	"github.com/escoutdoor/social/internal/types"
 	"github.com/escoutdoor/social/pkg/validator"
@@ -28,12 +28,11 @@ func (st *userServiceSuite) SetupTest() {
 	st.Require().NotEmpty(container, "expected to get non-empty container")
 	st.Require().NotEmpty(db, "expected to get non-empty db connection")
 
-	repo := postgres.NewUserRepository(db)
-	authRepo := postgres.NewAuthRepository(db)
+	repo := repository.New(db)
 
 	st.container = container
-	st.svc = NewUserService(repo, validator.New())
-	st.authSvc = NewAuthService(authRepo, repo, signKey)
+	st.svc = NewUserService(repo.User, validator.New())
+	st.authSvc = NewAuthService(repo.Auth, repo.User, signKey)
 }
 
 func (st *userServiceSuite) TestGetByIDExistingUser() {
