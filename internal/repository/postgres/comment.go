@@ -42,6 +42,8 @@ func (s *CommentRepository) Create(ctx context.Context, userID uuid.UUID, postID
 				return id, repoerrs.ErrPostNotFound
 			case "comments_parent_comment_id_fkey":
 				return id, repoerrs.ErrCommentNotFound
+			case "comments_user_id_fkey":
+				return id, repoerrs.ErrUserNotFound
 			}
 		}
 		return id, err
