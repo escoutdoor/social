@@ -13,7 +13,7 @@ import (
 const expires = time.Second * 24 * 60 * 60
 
 func (m *MinIOClient) generateUrl(id string) string {
-	url := fmt.Sprintf("%s/%s/%s", m.cfg.MinIOEndpoint, m.cfg.MinIOBucketName, id)
+	url := fmt.Sprintf("%s/%s/%s", m.MinIOEndpoint, m.MinIOBucketName, id)
 	return url
 }
 
@@ -21,7 +21,7 @@ func (m *MinIOClient) Create(file types.File) (string, error) {
 	id := uuid.New().String()
 	if _, err := m.mc.PutObject(
 		context.Background(),
-		m.cfg.MinIOBucketName,
+		m.MinIOBucketName,
 		id,
 		file.Payload,
 		file.Size,
@@ -50,7 +50,7 @@ func (m *MinIOClient) GetByID(id string) (string, error) {
 }
 
 func (m *MinIOClient) Delete(id string) error {
-	err := m.mc.RemoveObject(context.Background(), m.cfg.MinIOBucketName, id, minio.RemoveObjectOptions{})
+	err := m.mc.RemoveObject(context.Background(), m.MinIOBucketName, id, minio.RemoveObjectOptions{})
 	if err != nil {
 		return err
 	}

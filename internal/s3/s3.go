@@ -4,15 +4,24 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/escoutdoor/social/internal/config"
 	"github.com/escoutdoor/social/internal/types"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 type MinIOClient struct {
-	mc  *minio.Client
-	cfg *config.Config
+	mc *minio.Client
+	Opts
+}
+
+type Opts struct {
+	MinIOBucketName string
+	MinIOEndpoint   string
+	MinIOHost       string
+	MinIOUser       string
+	MinIOPw         string
+	MinIOUseSSL     bool
+	MinIORegion     string
 }
 
 type Repository interface {
@@ -21,28 +30,28 @@ type Repository interface {
 	GetByID(id string) (string, error)
 }
 
-func New(cfg *config.Config) (*MinIOClient, error) {
+func New(opts Opts) (*MinIOClient, error) {
 	ctx := context.Background()
-	client, err := minio.New(cfg.MinIOHost, &minio.Options{
-		Creds:  credentials.NewStaticV4(cfg.MinIOUser, cfg.MinIOPw, ""),
-		Secure: cfg.MinIOUseSSL,
-		Region: cfg.MinIORegion,
+	client, err := minio.New(opts.MinIOHost, &minio.Options{
+		Creds:  credentials.NewStaticV4(opts.MinIOUser, opts.MinIOPw, ""),
+		Secure: opts.MinIOUseSSL,
+		Region: opts.MinIORegion,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	ie, err := client.BucketExists(ctx, cfg.MinIOBucketName)
+	ie, err := client.BucketExists(ctx, opts.MinIOBucketName)
 	if err != nil {
 		return nil, err
 	}
 	if !ie {
-		if err := client.MakeBucket(ctx, cfg.MinIOBucketName, minio.MakeBucketOptions{}); err != nil {
+		if err := client.MakeBucket(ctx, opts.MinIOBucketName, minio.MakeBucketOptions{}); err != nil {
 			return nil, err
 		}
 		if err := client.SetBucketPolicy(
 			ctx,
-			cfg.MinIOBucketName,
+			opts.MinIOBucketName,
 			`{
 				"Version": "2012-10-17",
 				"Statement": [
@@ -57,7 +66,7 @@ func New(cfg *config.Config) (*MinIOClient, error) {
 							"s3:GetObject"
 						],
 						"Resource": [
-							"arn:aws:s3:::`+cfg.MinIOBucketName+`/*"
+							"arn:aws:s3:::`+opts.MinIOBucketName+`/*"
 						]
 					}
 				]
@@ -65,5 +74,5 @@ func New(cfg *config.Config) (*MinIOClient, error) {
 			return nil, fmt.Errorf("error client.SetBucketPolicy: %w", err)
 		}
 	}
-	return &MinIOClient{mc: client, cfg: cfg}, nil
+	return &MinIOClient{mc: client}, nil
 }

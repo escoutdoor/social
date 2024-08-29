@@ -21,7 +21,7 @@ func NewRedisContainer() (testcontainers.Container, cache.Repository, error) {
 		return nil, nil, fmt.Errorf("failed to get container external port: %w", err)
 	}
 
-	redisAddr := fmt.Sprintf("localhost:%s", p.Port())
+	redisAddr := fmt.Sprintf("redis://localhost:%s", p.Port())
 	c, err := cache.New(redisAddr)
 	if err != nil {
 		return nil, nil, err

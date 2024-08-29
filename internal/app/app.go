@@ -30,7 +30,15 @@ func Run() error {
 	slog.Info("successfully connected to postgres")
 	repo := repository.New(db)
 
-	s3, err := s3.New(cfg)
+	s3, err := s3.New(s3.Opts{
+		MinIOBucketName: cfg.MinIOBucketName,
+		MinIOEndpoint:   cfg.MinIOEndpoint,
+		MinIOHost:       cfg.MinIOHost,
+		MinIOUser:       cfg.MinIOUser,
+		MinIOPw:         cfg.MinIOPw,
+		MinIOUseSSL:     cfg.MinIOUseSSL,
+		MinIORegion:     cfg.MinIORegion,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to connect to s3: %w", err)
 	}
