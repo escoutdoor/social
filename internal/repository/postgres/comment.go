@@ -53,20 +53,42 @@ func (s *CommentRepository) Create(ctx context.Context, userID uuid.UUID, postID
 
 func (s *CommentRepository) GetByID(ctx context.Context, id uuid.UUID) (*types.Comment, error) {
 	stmt, err := s.db.PrepareContext(ctx, `
-		SELECT * FROM COMMENTS WHERE ID = $1 
+		SELECT 
+			c.ID,
+			c.CONTENT,
+			c.USER_ID,
+			c.POST_ID,
+			c.PARENT_COMMENT_ID,
+			COUNT(l.ID) as LIKES,
+			c.UPDATED_AT,
+			c.CREATED_AT
+		FROM COMMENTS c
+		LEFT JOIN COMMENT_LIKES l ON c.ID = l.COMMENT_ID
+		WHERE c.ID = $1
+		GROUP BY c.ID
 	`)
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := stmt.QueryContext(ctx, id)
+	var comment types.Comment
+	err = stmt.QueryRowContext(ctx, id).Scan(
+		&comment.ID,
+		&comment.Content,
+		&comment.UserID,
+		&comment.PostID,
+		&comment.ParentCommentID,
+		&comment.Likes,
+		&comment.CreatedAt,
+		&comment.UpdatedAt,
+	)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, repoerrs.ErrCommentNotFound
+		}
 		return nil, err
 	}
-	if rows.Next() {
-		return scanComment(rows)
-	}
-	return nil, repoerrs.ErrCommentNotFound
+	return &comment, err
 }
 
 func (s *CommentRepository) GetAll(ctx context.Context, postID uuid.UUID) ([]types.Comment, error) {
@@ -167,18 +189,4 @@ func (s *CommentRepository) Delete(ctx context.Context, id uuid.UUID) error {
 		return repoerrs.ErrCommentNotFound
 	}
 	return nil
-}
-
-func scanComment(rows *sql.Rows) (*types.Comment, error) {
-	var comment types.Comment
-	err := rows.Scan(
-		&comment.ID,
-		&comment.Content,
-		&comment.UserID,
-		&comment.PostID,
-		&comment.ParentCommentID,
-		&comment.UpdatedAt,
-		&comment.CreatedAt,
-	)
-	return &comment, err
 }
