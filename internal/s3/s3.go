@@ -74,5 +74,5 @@ func New(opts Opts) (*MinIOClient, error) {
 			return nil, fmt.Errorf("error client.SetBucketPolicy: %w", err)
 		}
 	}
-	return &MinIOClient{mc: client}, nil
+	return &MinIOClient{mc: client, Opts: opts}, nil
 }

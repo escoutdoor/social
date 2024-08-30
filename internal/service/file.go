@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"io"
 	"mime/multipart"
 
 	"github.com/escoutdoor/social/internal/s3"
@@ -18,7 +19,7 @@ func NewFileService(s3 s3.Repository) *FileService {
 	}
 }
 
-func (s *FileService) Create(ctx context.Context, src multipart.File, hdr *multipart.FileHeader) (string, error) {
+func (s *FileService) Create(ctx context.Context, src io.Reader, hdr *multipart.FileHeader) (string, error) {
 	f := types.File{
 		Name:    hdr.Filename,
 		Payload: src,

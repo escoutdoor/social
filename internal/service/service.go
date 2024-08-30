@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"io"
 	"mime/multipart"
 
 	"github.com/escoutdoor/social/internal/cache"
@@ -47,7 +48,7 @@ type Like interface {
 }
 
 type File interface {
-	Create(ctx context.Context, src multipart.File, hdr *multipart.FileHeader) (string, error)
+	Create(ctx context.Context, src io.Reader, hdr *multipart.FileHeader) (string, error)
 }
 
 type Opts struct {

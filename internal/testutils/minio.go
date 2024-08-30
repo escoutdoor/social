@@ -6,18 +6,32 @@ import (
 
 	"github.com/escoutdoor/social/internal/s3"
 	"github.com/testcontainers/testcontainers-go"
-	miniomodule "github.com/testcontainers/testcontainers-go/modules/minio"
+	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 var (
 	minioUser = "test-user"
-	minioPw   = "test-pw"
+	minioPw   = "escoutdoor2024"
 )
 
 func NewMinIOContainer() (testcontainers.Container, s3.Repository, error) {
 	ctx := context.Background()
 
-	container, err := miniomodule.Run(ctx, "minio/minio:latest")
+	req := testcontainers.ContainerRequest{
+		Image:        "minio/minio:latest",
+		ExposedPorts: []string{"9000/tcp"},
+		Env: map[string]string{
+			"MINIO_ROOT_USER":     minioUser,
+			"MINIO_ROOT_PASSWORD": minioPw,
+		},
+		Cmd:        []string{"server", "/data"},
+		WaitingFor: wait.ForHTTP("/minio/health/live").WithPort("9000"),
+	}
+
+	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: req,
+		Started:          true,
+	})
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to start MinIO container: %w", err)
 	}
@@ -34,9 +48,9 @@ func NewMinIOContainer() (testcontainers.Container, s3.Repository, error) {
 
 	endpoint := fmt.Sprintf("%s:%s", host, port.Port())
 	s3, err := s3.New(s3.Opts{
-		MinIOBucketName: "test-bucket",
+		MinIOBucketName: "testbucket",
 		MinIOEndpoint:   endpoint,
-		MinIOHost:       host,
+		MinIOHost:       endpoint,
 		MinIOUser:       minioUser,
 		MinIOPw:         minioPw,
 		MinIOUseSSL:     false,
