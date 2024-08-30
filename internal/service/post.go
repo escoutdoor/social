@@ -70,6 +70,7 @@ func (s *PostService) Update(ctx context.Context, postID, userID uuid.UUID, inpu
 	}
 	return post, nil
 }
+
 func (s *PostService) GetByID(ctx context.Context, id uuid.UUID) (*types.Post, error) {
 	key := generatePostKey(id)
 	post, err := s.cache.GetPost(ctx, key)
@@ -88,23 +89,9 @@ func (s *PostService) GetByID(ctx context.Context, id uuid.UUID) (*types.Post, e
 
 	return post, nil
 }
-func (s *PostService) GetAll(ctx context.Context) ([]types.Post, error) {
-	key := "posts"
 
-	posts, err := s.cache.GetPosts(ctx, key)
-	if errors.Is(err, redis.Nil) {
-		posts, err = s.repo.GetAll(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if err := s.cache.Set(ctx, key, posts, time.Minute*1).Err(); err != nil {
-			return nil, fmt.Errorf("failed to cache data: %w", err)
-		}
-	}
-	if err != nil {
-		return nil, err
-	}
-	return posts, nil
+func (s *PostService) GetAll(ctx context.Context) ([]types.Post, error) {
+	return s.repo.GetAll(ctx)
 }
 
 func (s *PostService) Delete(ctx context.Context, postID uuid.UUID, userID uuid.UUID) error {
@@ -123,7 +110,13 @@ func (s *PostService) Delete(ctx context.Context, postID uuid.UUID, userID uuid.
 		return ErrAccessDenied
 	}
 
-	if err := s.cache.Del(ctx, key).Err(); err != nil {
+	err = s.repo.Delete(ctx, postID)
+	if err != nil {
+		return err
+	}
+
+	err = s.cache.Del(ctx, key).Err()
+	if err != nil {
 		return fmt.Errorf("failed to delete item from cache: %w", err)
 	}
 	return nil
