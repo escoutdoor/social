@@ -22,6 +22,7 @@ type Cache struct {
 type Repository interface {
 	GetPost(ctx context.Context, key string) (*types.Post, error)
 	GetPosts(ctx context.Context, key string) ([]types.Post, error)
+	SetPosts(ctx context.Context, key string, posts []types.Post, expiration time.Duration) error
 
 	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
 	Del(ctx context.Context, keys ...string) *redis.IntCmd
@@ -63,4 +64,16 @@ func (c *Cache) GetPosts(ctx context.Context, key string) ([]types.Post, error) 
 		return nil, fmt.Errorf("%s: %w", ErrUnmarshalFailed, err)
 	}
 	return posts, nil
+}
+
+func (c *Cache) SetPosts(ctx context.Context, key string, posts []types.Post, expiration time.Duration) error {
+	data, err := json.Marshal(posts)
+	if err != nil {
+		return fmt.Errorf("failed to marshal posts: %w", err)
+	}
+
+	if err := c.Set(ctx, key, data, expiration).Err(); err != nil {
+		return fmt.Errorf("failed to set cache: %w", err)
+	}
+	return nil
 }
