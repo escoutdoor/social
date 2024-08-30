@@ -24,7 +24,7 @@ type likeServiceSuite struct {
 	authSvc        Auth
 }
 
-func (st *likeServiceSuite) SetupTest() {
+func (st *likeServiceSuite) SetupSuite() {
 	container, db, err := testutils.NewPostgresContainer()
 	st.Require().NoError(err, "failed to run postgres container")
 	st.Require().NotEmpty(container, "expected to get postgres container")
@@ -43,6 +43,14 @@ func (st *likeServiceSuite) SetupTest() {
 	st.authSvc = NewAuthService(repo.Auth, repo.User, signKey)
 	st.postSvc = NewPostService(repo.Post, c)
 	st.commentSvc = NewCommentService(repo.Comment, repo.Post)
+}
+
+func (st *likeServiceSuite) TearDownSuite() {
+	err := st.container.Terminate(context.Background())
+	st.Require().NoError(err, "failed to terminate postgres container")
+
+	err = st.redisContainer.Terminate(context.Background())
+	st.Require().NoError(err, "failed to terminate redis container")
 }
 
 func (st *likeServiceSuite) TestLikeAndRemoveLikeFromPost() {

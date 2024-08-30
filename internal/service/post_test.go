@@ -22,7 +22,7 @@ type postServiceSuite struct {
 	authSvc        Auth
 }
 
-func (st *postServiceSuite) SetupTest() {
+func (st *postServiceSuite) SetupSuite() {
 	container, db, err := testutils.NewPostgresContainer()
 	st.Require().NoError(err, "failed to run postgres container")
 	st.Require().NotEmpty(container, "expected to get postgres container")
@@ -39,6 +39,14 @@ func (st *postServiceSuite) SetupTest() {
 	st.redisContainer = redisContainer
 	st.svc = NewPostService(repo.Post, c)
 	st.authSvc = NewAuthService(repo.Auth, repo.User, signKey)
+}
+
+func (st *postServiceSuite) TearDownSuite() {
+	err := st.container.Terminate(context.Background())
+	st.Require().NoError(err, "failed to terminate postgres container")
+
+	err = st.redisContainer.Terminate(context.Background())
+	st.Require().NoError(err, "failed to terminate redis container")
 }
 
 func (st *postServiceSuite) TestGetByIDExistingPost() {

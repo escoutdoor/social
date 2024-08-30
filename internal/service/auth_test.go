@@ -23,7 +23,7 @@ type authServiceSuite struct {
 	svc       Auth
 }
 
-func (st *authServiceSuite) SetupTest() {
+func (st *authServiceSuite) SetupSuite() {
 	container, db, err := testutils.NewPostgresContainer()
 	st.Require().NoError(err, "failed to run postgres container")
 	st.Require().NotEmpty(container, "expected to get postgres container")
@@ -33,6 +33,11 @@ func (st *authServiceSuite) SetupTest() {
 
 	st.container = container
 	st.svc = NewAuthService(repo.Auth, repo.User, signKey)
+}
+
+func (st *authServiceSuite) TearDownSuite() {
+	err := st.container.Terminate(context.Background())
+	st.Require().NoError(err, "failed to terminate postgres container")
 }
 
 func (st *authServiceSuite) TestSignUp() {

@@ -23,7 +23,7 @@ type commentServiceSuite struct {
 	authSvc        Auth
 }
 
-func (st *commentServiceSuite) SetupTest() {
+func (st *commentServiceSuite) SetupSuite() {
 	container, db, err := testutils.NewPostgresContainer()
 	st.Require().NoError(err, "failed to run postgres container")
 	st.Require().NotEmpty(container, "expected to get postgres container")
@@ -41,6 +41,14 @@ func (st *commentServiceSuite) SetupTest() {
 	st.svc = NewCommentService(repo.Comment, repo.Post)
 	st.postSvc = NewPostService(repo.Post, c)
 	st.authSvc = NewAuthService(repo.Auth, repo.User, signKey)
+}
+
+func (st *commentServiceSuite) TearDownSuite() {
+	err := st.container.Terminate(context.Background())
+	st.Require().NoError(err, "failed to terminate postgres container")
+
+	err = st.redisContainer.Terminate(context.Background())
+	st.Require().NoError(err, "failed to terminate redis container")
 }
 
 func (st *commentServiceSuite) TestCreateCommentExistingPost() {

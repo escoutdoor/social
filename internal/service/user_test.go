@@ -22,7 +22,7 @@ type userServiceSuite struct {
 	authSvc   Auth
 }
 
-func (st *userServiceSuite) SetupTest() {
+func (st *userServiceSuite) SetupSuite() {
 	container, db, err := testutils.NewPostgresContainer()
 	st.Require().NoError(err, "failed to run container")
 	st.Require().NotEmpty(container, "expected to get non-empty container")
@@ -33,6 +33,11 @@ func (st *userServiceSuite) SetupTest() {
 	st.container = container
 	st.svc = NewUserService(repo.User, validator.New())
 	st.authSvc = NewAuthService(repo.Auth, repo.User, signKey)
+}
+
+func (st *userServiceSuite) TearDownSuite() {
+	err := st.container.Terminate(context.Background())
+	st.Require().NoError(err, "failed to terminate postgres container")
 }
 
 func (st *userServiceSuite) TestGetByIDExistingUser() {
