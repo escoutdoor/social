@@ -1,8 +1,19 @@
-# Social network api
-The main goal of building this app was learning new technologies for me, such as:
-* Redis: caching and efficient data retrieval to improve performance.
-* Docker-compose, air: easier to organize various services such as API server, PostgreSQL, Redis and MinIO into a single development environment. Air for hot reloading.
-* S3(MinIO): file storage for managing user-uploaded content
+# Social Network API
 
-## About project
-The project includes user authentication, the ability to create and manage posts, comment on posts, like or dislike content, and handle file uploads such as profile pictures and post images.
+This project serves as a learning experience, showcasing various technologies and tools. Here’s a breakdown of what I aimed to achieve and the technologies involved:
+
+## Objectives
+
+- Redis: Implemented for caching and efficient data retrieval, which enhances overall performance.
+- Docker Compose & Air: Used for streamlining the development environment. Docker Compose helps manage multiple services (API server, PostgreSQL, Redis, MinIO) in a unified setup, while Air provides hot reloading for seamless development.
+- S3 (MinIO): Utilized for file storage, enabling management of user-uploaded content such as profile pictures and post images.
+- Testcontainers: Employed for integration testing. 
+
+## Project Overview
+
+This social network API encompasses the following features:
+
+- Authorization: Secure user registration and login functionalities.
+- Post Management: Create, manage, and view posts.
+- Interactions: Comment on posts and like or dislike content.
+- File Uploads: Handle uploads for profile pictures and images within posts.
