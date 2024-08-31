@@ -29,11 +29,13 @@ func (s *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*types.User
 	if err != nil {
 		return nil, err
 	}
+	defer stmt.Close()
 
 	rows, err := stmt.QueryContext(ctx, id)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	if rows.Next() {
 		return scanUser(rows)
@@ -48,11 +50,13 @@ func (s *UserRepository) GetByEmail(ctx context.Context, email string) (*types.U
 	if err != nil {
 		return nil, err
 	}
+	defer stmt.Close()
 
 	rows, err := stmt.QueryContext(ctx, email)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	if rows.Next() {
 		return scanUser(rows)
@@ -75,6 +79,7 @@ func (s *UserRepository) Update(ctx context.Context, input types.User) (*types.U
 	if err != nil {
 		return nil, err
 	}
+	defer stmt.Close()
 
 	var dob time.Time
 	if input.DOB != nil {
@@ -109,6 +114,7 @@ func (s *UserRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	if err != nil {
 		return err
 	}
+	defer stmt.Close()
 
 	result, err := stmt.ExecContext(ctx, id)
 	if v, _ := result.RowsAffected(); v == 0 {

@@ -27,6 +27,7 @@ func (s *LikeRepository) LikePost(ctx context.Context, postID uuid.UUID, userID 
 	if err != nil {
 		return err
 	}
+	defer stmt.Close()
 
 	res, err := stmt.ExecContext(ctx, postID, userID)
 	if err != nil {
@@ -49,6 +50,8 @@ func (s *LikeRepository) RemoveLikeFromPost(ctx context.Context, postID uuid.UUI
 	if err != nil {
 		return err
 	}
+	defer stmt.Close()
+
 	res, err := stmt.ExecContext(ctx, postID, userID)
 	if err != nil {
 		return err
@@ -64,6 +67,7 @@ func (s *LikeRepository) IsPostLiked(ctx context.Context, postID uuid.UUID) (boo
 	if err != nil {
 		return false, err
 	}
+	defer stmt.Close()
 
 	var count int
 	if err = stmt.QueryRowContext(ctx, postID).Scan(&count); err != nil {
@@ -79,6 +83,7 @@ func (s *LikeRepository) LikeComment(ctx context.Context, commentID uuid.UUID, u
 	if err != nil {
 		return err
 	}
+	defer stmt.Close()
 
 	res, err := stmt.ExecContext(ctx, commentID, userID)
 	if err != nil {
@@ -99,9 +104,9 @@ func (s *LikeRepository) RemoveLikeFromComment(ctx context.Context, commentID uu
 		DELETE FROM COMMENT_LIKES WHERE COMMENT_ID = $1 AND USER_ID = $2
 	`)
 	if err != nil {
-
 		return err
 	}
+	defer stmt.Close()
 
 	res, err := stmt.ExecContext(ctx, commentID, userID)
 	if err != nil {
@@ -118,6 +123,7 @@ func (s *LikeRepository) IsCommentLiked(ctx context.Context, commentID uuid.UUID
 	if err != nil {
 		return false, err
 	}
+	defer stmt.Close()
 
 	var count int
 	if err = stmt.QueryRowContext(ctx, commentID).Scan(&count); err != nil {

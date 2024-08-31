@@ -31,6 +31,7 @@ func (s *CommentRepository) Create(ctx context.Context, userID uuid.UUID, postID
 	if err != nil {
 		return id, err
 	}
+	defer stmt.Close()
 
 	args := []interface{}{input.Content, input.ParentCommentID, postID, userID}
 	err = stmt.QueryRowContext(ctx, args...).Scan(&id)
@@ -70,6 +71,7 @@ func (s *CommentRepository) GetByID(ctx context.Context, id uuid.UUID) (*types.C
 	if err != nil {
 		return nil, err
 	}
+	defer stmt.Close()
 
 	var comment types.Comment
 	err = stmt.QueryRowContext(ctx, id).Scan(
@@ -93,45 +95,25 @@ func (s *CommentRepository) GetByID(ctx context.Context, id uuid.UUID) (*types.C
 
 func (s *CommentRepository) GetAll(ctx context.Context, postID uuid.UUID) ([]types.Comment, error) {
 	stmt, err := s.db.PrepareContext(ctx, `
-		WITH RECURSIVE comments_cte AS (
-			SELECT 
-				id,
-				content,
-				user_id,
-				post_id,
-				parent_comment_id,
-				created_at,
-				updated_at,
-				1 AS depth
-			FROM COMMENTS 
-			WHERE post_id = $1 AND parent_comment_id IS NULL
-			UNION ALL
-			SELECT 
-				c.id,
-				c.content,
-				c.user_id,
-				c.post_id,
-				c.parent_comment_id,
-				c.created_at,
-				c.updated_at,
-				cte.depth + 1
-			FROM COMMENTS c
-			JOIN comments_cte cte ON c.parent_comment_id = cte.id
-		)
-		SELECT
-			id,
-			content,
-			user_id,
-			post_id,
-			parent_comment_id,
-			created_at,
-			updated_at,
-			depth
-		FROM comments_cte ORDER BY depth, created_at;
+		SELECT 
+			cm.ID,
+			cm.CONTENT,
+			cm.USER_ID,
+			cm.POST_ID,
+			cm.PARENT_COMMENT_ID,
+			COUNT(cl.ID) AS LIKES,
+			cm.CREATED_AT,
+			cm.UPDATED_AT
+		FROM COMMENTS cm
+		LEFT JOIN COMMENT_LIKES cl ON cm.ID = cl.COMMENT_ID
+		WHERE cm.POST_ID = $1
+		GROUP BY cm.ID
+		ORDER BY LIKES, CREATED_AT
 	`)
 	if err != nil {
 		return nil, err
 	}
+	defer stmt.Close()
 
 	rows, err := stmt.QueryContext(ctx, postID)
 	if err != nil {
@@ -139,14 +121,14 @@ func (s *CommentRepository) GetAll(ctx context.Context, postID uuid.UUID) ([]typ
 	}
 	defer rows.Close()
 
-	var comments []types.Comment
-	commentMap := make(map[uuid.UUID]*types.Comment)
-
+	var (
+		commentsMap = make(map[uuid.UUID]*types.Comment)
+		comments    []types.Comment
+	)
 	for rows.Next() {
 		var (
-			c     types.Comment
-			pcid  uuid.NullUUID
-			depth int
+			c    types.Comment
+			pcid uuid.NullUUID
 		)
 		if err := rows.Scan(
 			&c.ID,
@@ -154,24 +136,24 @@ func (s *CommentRepository) GetAll(ctx context.Context, postID uuid.UUID) ([]typ
 			&c.UserID,
 			&c.PostID,
 			&pcid,
+			&c.Likes,
 			&c.CreatedAt,
 			&c.UpdatedAt,
-			&depth,
 		); err != nil {
 			return nil, err
 		}
-
 		if pcid.Valid {
 			c.ParentCommentID = &pcid.UUID
 		}
 
-		commentMap[c.ID] = &c
-		if c.ParentCommentID != nil {
-			parent := commentMap[*c.ParentCommentID]
-			parent.Replies = append(parent.Replies, c)
-		} else {
+		commentsMap[c.ID] = &c
+		if c.ParentCommentID == nil {
 			comments = append(comments, c)
 		}
+	}
+
+	for i := range comments {
+		comments[i].Replies = getReplies(comments[i].ID, commentsMap)
 	}
 	return comments, nil
 }
@@ -183,10 +165,22 @@ func (s *CommentRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	if err != nil {
 		return err
 	}
+	defer stmt.Close()
 
 	result, err := stmt.ExecContext(ctx, id)
 	if v, _ := result.RowsAffected(); v == 0 {
 		return repoerrs.ErrCommentNotFound
 	}
 	return nil
+}
+
+func getReplies(id uuid.UUID, commentsMap map[uuid.UUID]*types.Comment) []types.Comment {
+	var replies []types.Comment
+	for _, cm := range commentsMap {
+		if cm.ParentCommentID != nil && *cm.ParentCommentID == id {
+			cm.Replies = getReplies(cm.ID, commentsMap)
+			replies = append(replies, *cm)
+		}
+	}
+	return replies
 }

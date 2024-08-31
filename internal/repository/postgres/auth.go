@@ -31,6 +31,7 @@ func (s *AuthRepository) Create(ctx context.Context, input types.CreateUserReq) 
 	if err != nil {
 		return id, err
 	}
+	defer stmt.Close()
 
 	args := []interface{}{input.FirstName, input.LastName, input.Email, input.Password}
 	err = stmt.QueryRowContext(ctx, args...).Scan(&id)

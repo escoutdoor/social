@@ -28,6 +28,7 @@ func (s *PostRepository) Create(ctx context.Context, userID uuid.UUID, input typ
 	if err != nil {
 		return nil, err
 	}
+	defer stmt.Close()
 
 	args := []interface{}{input.Content, userID, input.PhotoURL}
 	rows, err := stmt.QueryContext(ctx, args...)
@@ -51,6 +52,7 @@ func (s *PostRepository) Update(ctx context.Context, postID uuid.UUID, input typ
 	if err != nil {
 		return nil, err
 	}
+	defer stmt.Close()
 
 	args := []interface{}{input.Content, input.PhotoURL, postID}
 	if _, err = stmt.ExecContext(ctx, args...); err != nil {
@@ -77,6 +79,7 @@ func (s *PostRepository) GetByID(ctx context.Context, id uuid.UUID) (*types.Post
 	if err != nil {
 		return nil, err
 	}
+	defer stmt.Close()
 
 	var post types.Post
 	err = stmt.QueryRowContext(ctx, id).Scan(
@@ -98,23 +101,47 @@ func (s *PostRepository) GetByID(ctx context.Context, id uuid.UUID) (*types.Post
 }
 
 func (s *PostRepository) GetAll(ctx context.Context) ([]types.Post, error) {
-	stmt, err := s.db.PrepareContext(ctx, `SELECT * FROM POSTS`)
+	stmt, err := s.db.PrepareContext(ctx, `
+		SELECT 
+			p.ID,
+			p.CONTENT,
+			p.USER_ID,
+			p.PHOTO_URL,
+			COUNT(l.ID) AS LIKES,
+			p.CREATED_AT,
+			p.UPDATED_AT
+		FROM POSTS p
+		LEFT JOIN POST_LIKES l ON p.ID = l.POST_ID
+		GROUP BY p.ID
+		ORDER BY p.CREATED_AT
+	`)
 	if err != nil {
 		return nil, err
 	}
+	defer stmt.Close()
 
 	rows, err := stmt.QueryContext(ctx)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	var posts []types.Post
 	for rows.Next() {
-		p, err := scanPost(rows)
+		var p types.Post
+		err = rows.Scan(
+			&p.ID,
+			&p.Content,
+			&p.UserID,
+			&p.PhotoURL,
+			&p.Likes,
+			&p.CreatedAt,
+			&p.UpdatedAt,
+		)
 		if err != nil {
 			return nil, err
 		}
-		posts = append(posts, *p)
+		posts = append(posts, p)
 	}
 	return posts, nil
 }
@@ -126,6 +153,7 @@ func (s *PostRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	if err != nil {
 		return err
 	}
+	defer stmt.Close()
 
 	res, err := stmt.ExecContext(ctx, id)
 	if err != nil {
