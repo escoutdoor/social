@@ -12,14 +12,14 @@ import (
 func New(connStr string) (*sql.DB, error) {
 	conn, err := sql.Open("postgres", connStr)
 	if err != nil {
-		return nil, fmt.Errorf("db connection error: %w", err)
+		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
 	if err := conn.PingContext(ctx); err != nil {
-		return nil, fmt.Errorf("db ping error: %w", err)
+		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 	return conn, nil
 }
